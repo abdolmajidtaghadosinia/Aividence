@@ -340,6 +340,7 @@ export interface AudioTextGetResponse {
     file_name: string;
     status: string;
     original_text: string;
+    processed_text?: string;
     custom_text: string;
     has_custom_text: boolean;
     created_at: string;

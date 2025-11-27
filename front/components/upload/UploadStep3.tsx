@@ -12,7 +12,11 @@ interface UploadStep3Props {
 
 const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editedText, setEditedText] = useState(data.editedText || '');
+    const [editedText, setEditedText] = useState(data.editedText || data.originalText || '');
+
+    React.useEffect(() => {
+        setEditedText(data.editedText || data.originalText || '');
+    }, [data.editedText, data.originalText]);
 
     const handleSaveEditedText = (newText: string) => {
         setEditedText(newText);
@@ -67,7 +71,7 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
                  <div className="w-full md:w-2/3">
                       <h4 className="font-semibold text-gray-800 mb-4">متن نهایی</h4>
                       <div className="bg-gray-50 p-4 rounded-lg border h-64 overflow-y-auto text-gray-700 leading-relaxed">
-                          {formatAsMeetingMinutes(editedText)}
+                          {formatAsMeetingMinutes(editedText || data.originalText || '')}
                       </div>
                       <div className="mt-4">
                         <button onClick={() => setIsEditModalOpen(true)} className="text-sky-600 font-semibold hover:underline flex items-center gap-2">

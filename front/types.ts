@@ -20,6 +20,7 @@ export interface FileData {
   duration?: number;
   uploader?: string;
   originalText?: string;
+  processedText?: string;
   editedText?: string;
   audioSrc?: string;
   extractedPhrases?: string[];

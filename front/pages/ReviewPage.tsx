@@ -30,8 +30,9 @@ const ReviewPage: React.FC = () => {
             try {
                 const res = await getAudioTextByUuid(file.upload_uuid);
                 const updated: Partial<FileData> = {
-                    originalText: res.original_text || '',
-                    editedText: res.custom_text || '',
+                    processedText: res.processed_text || res.original_text || '',
+                    originalText: res.original_text || res.processed_text || '',
+                    editedText: res.custom_text || res.processed_text || res.original_text || '',
                 };
                 setFileData({ ...file, ...updated });
             } catch (e) {

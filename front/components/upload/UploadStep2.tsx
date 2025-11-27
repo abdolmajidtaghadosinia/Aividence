@@ -23,8 +23,13 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
 
     // Sync localData when parent data updates (after backend fetch)
     useEffect(() => {
-        setLocalData(prev => ({ ...prev, originalText: data.originalText, editedText: data.editedText }));
-    }, [data.originalText, data.editedText]);
+        setLocalData(prev => ({
+            ...prev,
+            processedText: data.processedText,
+            originalText: data.originalText || data.processedText,
+            editedText: data.editedText,
+        }));
+    }, [data.originalText, data.editedText, data.processedText]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setLocalData({ ...localData, [e.target.name]: e.target.value });
@@ -63,7 +68,7 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">متن استخراج شده (فقط خواندنی)</label>
                         <div className="w-full h-64 p-3 bg-gray-100 border border-gray-300 rounded-lg overflow-y-auto leading-relaxed">
-                           {localData.originalText || ''}
+                           {localData.originalText || localData.processedText || ''}
                         </div>
                     </div>
                      <div className="mb-6">
@@ -109,7 +114,7 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                     <FullScreenEditModal
                         isOpen={isEditModalOpen}
                         onClose={() => setIsEditModalOpen(false)}
-                        initialText={localData.editedText || localData.originalText || ''}
+                        initialText={localData.editedText || localData.originalText || localData.processedText || ''}
                         onSave={handleSaveEditedText}
                         title="ویرایش متن استخراج شده"
                     />
