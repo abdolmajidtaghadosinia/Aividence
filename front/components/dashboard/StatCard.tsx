@@ -34,7 +34,6 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, colorTheme, status, o
             tabIndex={0}
             onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && onFilterClick(status)}
         >
-            <span className="absolute inset-x-4 top-3 h-1 rounded-full bg-white/50" aria-hidden />
             <div className="flex items-center justify-between relative z-10">
                 <div className="p-2.5 rounded-xl bg-white/70 border border-white/70 shadow-inner">
                     {icon}

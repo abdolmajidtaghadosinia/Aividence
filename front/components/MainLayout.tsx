@@ -18,7 +18,7 @@ const MainLayout: React.FC = () => {
             <div className="pointer-events-none absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-100 blur-[100px] opacity-70 animate-breath" />
             <div className="pointer-events-none absolute bottom-12 left-10 w-64 h-64 bg-cyan-100 blur-[90px] opacity-50 animate-breath" />
 
-            <div className="relative flex gap-5 px-4 sm:px-6 lg:px-10 py-6">
+            <div className="relative flex items-start gap-5 px-4 sm:px-6 lg:px-10 py-6">
                 <Sidebar />
                 <div className="flex-1 flex flex-col gap-5 max-w-7xl mx-auto w-full">
                     <Header searchTerm={headerSearchTerm} onSearchChange={setHeaderSearchTerm} />

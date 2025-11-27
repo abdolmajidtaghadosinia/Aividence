@@ -71,7 +71,7 @@ const Sidebar: React.FC = () => {
     );
 
     return (
-        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 sticky top-6 self-start max-h-[calc(100vh-32px)] animate-fade-in-down">
+        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 md:sticky md:top-6 self-start max-h-[calc(100vh-32px)] md:overflow-y-auto animate-fade-in-down">
             <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-3 hover-lift">
                 <div className="w-12 h-12 rounded-2xl bg-white shadow flex items-center justify-center">
                     <LogoIcon className="w-7 h-7 text-indigo-600" />

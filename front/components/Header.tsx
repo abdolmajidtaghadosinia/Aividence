@@ -78,11 +78,9 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                     <p className="text-xs text-slate-500">پروژه مستندساز • کنترل لحظه‌ای</p>
-                                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 border border-emerald-100">امنیت فعال</span>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h1 className="text-2xl font-black text-slate-800">داشبورد مدیریت عملیات</h1>
-                                    <span className="rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-indigo-700 shadow-sm">به‌روزرسانی زنده</span>
                                 </div>
                             </div>
                         </div>
