@@ -74,6 +74,17 @@
         background-image: radial-gradient(rgba(99,102,241,0.12) 1px, transparent 0);
         background-size: 24px 24px;
       }
+
+      #modal-root {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        pointer-events: none;
+      }
+
+      #modal-root > * {
+        pointer-events: auto;
+      }
     </style>
   <script type="importmap">
 {

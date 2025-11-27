@@ -7,6 +7,7 @@ from django.http import HttpResponse
 import io
 import os
 import zipfile
+from xml.sax.saxutils import escape
 from office.models import KeywordList, AudioFileText
 from .serializers import KeywordListSerializer
 
@@ -20,11 +21,27 @@ try:
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.enums import TA_RIGHT
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 except Exception:  # pragma: no cover
     canvas = None
     A4 = None
     pdfmetrics = None
     TTFont = None
+    TA_RIGHT = None
+    ParagraphStyle = None
+    getSampleStyleSheet = None
+    Paragraph = None
+    SimpleDocTemplate = None
+    Spacer = None
+
+try:
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+except Exception:  # pragma: no cover
+    arabic_reshaper = None
+    get_display = None
 
 
 
@@ -87,7 +104,14 @@ class ExportCustomContentZipView(APIView):
 
         # In-memory PDF
         pdf_buf = io.BytesIO()
-        if canvas is None:
+        if (
+            canvas is None
+            or Paragraph is None
+            or SimpleDocTemplate is None
+            or ParagraphStyle is None
+            or getSampleStyleSheet is None
+            or TA_RIGHT is None
+        ):
             return Response({'detail': 'reportlab نصب نیست.'}, status=500)
 
         # Register a Persian-friendly font when available for proper glyph rendering.
@@ -106,59 +130,59 @@ class ExportCustomContentZipView(APIView):
                     except Exception:
                         continue
 
-        def _wrap_line(text, max_width, active_font):
-            """Wrap a single line to the maximum width based on the active font metrics."""
+        def _prepare_rtl_text(text: str) -> str:
+            """Return a display-ready RTL string when bidi helpers are available."""
 
             if not text:
-                return [""]
+                return ""
 
-            # Fallback to a naive character-based wrap when metrics are unavailable.
-            if pdfmetrics is None or active_font is None:
-                import textwrap
+            if arabic_reshaper and get_display:
+                try:
+                    reshaped = arabic_reshaper.reshape(text)
+                    return get_display(reshaped)
+                except Exception:
+                    pass
 
-                return textwrap.wrap(text, width=80) or [""]
+            return text
 
-            words = text.split()
-            wrapped, current = [], ""
-            for word in words:
-                candidate = word if not current else f"{current} {word}"
-                if (
-                    pdfmetrics.stringWidth(candidate, active_font, 12)
-                    <= max_width
-                ):
-                    current = candidate
-                else:
-                    if current:
-                        wrapped.append(current)
-                    current = word
-            if current:
-                wrapped.append(current)
-            return wrapped or [""]
+        pdf_width, pdf_height = A4 or (595, 842)
+        doc = SimpleDocTemplate(
+            pdf_buf,
+            pagesize=(pdf_width, pdf_height),
+            rightMargin=48,
+            leftMargin=48,
+            topMargin=48,
+            bottomMargin=48,
+            title=f"custom_content_{audio_text.id}",
+            author="Aividence",
+        )
 
-        c = canvas.Canvas(pdf_buf, pagesize=A4 or (595, 842))
-        width, height = (A4 or (595, 842))
-        margin = 48
-        line_height = 18
-        start_y = height - margin
-        text_x = width - margin  # Right-aligned for Persian content.
-        active_font = font_name or c._fontname
-        c.setFont(active_font, 12)
+        styles = getSampleStyleSheet()
+        active_font = font_name or (getattr(doc, "_fontname", None) or "Helvetica")
+        base_style = styles['Normal']
+        persian_style = ParagraphStyle(
+            'Persian',
+            parent=base_style,
+            fontName=active_font,
+            fontSize=12,
+            leading=18,
+            alignment=TA_RIGHT,
+            wordWrap='RTL',
+            rightIndent=0,
+            leftIndent=0,
+            allowWidows=1,
+            allowOrphans=1,
+        )
 
-        y = start_y
+        flowables = []
         for paragraph in content.splitlines() or [""]:
-            max_width = width - (margin * 2)
-            wrapped_lines = _wrap_line(paragraph, max_width, active_font)
-            for line in wrapped_lines:
-                if y < margin:
-                    c.showPage()
-                    c.setFont(active_font, 12)
-                    y = start_y
-                c.drawRightString(text_x, y, line)
-                y -= line_height
-            # Extra spacing between paragraphs.
-            y -= 4
+            shaped_text = _prepare_rtl_text(paragraph) or ""
+            # Paragraph requires at least one visible character; use NBSP for empty lines.
+            safe_text = escape(shaped_text) if shaped_text.strip() else "&nbsp;"
+            flowables.append(Paragraph(safe_text, persian_style))
+            flowables.append(Spacer(1, 6))
 
-        c.save()
+        doc.build(flowables)
         pdf_buf.seek(0)
 
         # ZIP both
