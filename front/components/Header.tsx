@@ -8,6 +8,12 @@ import { UserIcon, LogoutIcon, ChevronDownIcon, BellIcon, SearchIcon, UploadIcon
 import LogoutModal from './LogoutModal';
 import Logo from './Logo';
 
+/**
+ * Dropdown panel presenting account actions for the authenticated user.
+ *
+ * @param {{ onLogoutClick: () => void }} props - Callback invoked when logout is requested.
+ * @returns {JSX.Element} Action sheet with a logout trigger.
+ */
 const ProfileDropdown: React.FC<{ onLogoutClick: () => void }> = ({ onLogoutClick }) => (
     <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 p-2 animate-fade-in-down z-50">
         <button
@@ -21,6 +27,11 @@ const ProfileDropdown: React.FC<{ onLogoutClick: () => void }> = ({ onLogoutClic
 );
 
 
+/**
+ * Dashboard header showing user info, quick stats, and shortcut actions.
+ *
+ * @returns {JSX.Element} Composed header block with search, notifications, and session controls.
+ */
 const Header: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();

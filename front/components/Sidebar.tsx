@@ -3,6 +3,11 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { LogoIcon, DashboardIcon, UploadIcon, DictionaryIcon, AssistantIcon } from './Icons';
 import Logo from './Logo';
 
+/**
+ * Build the persistent right-hand navigation with descriptive menu entries and status cards.
+ *
+ * @returns {JSX.Element} Sticky sidebar featuring navigation links and quick project context.
+ */
 const Sidebar: React.FC = () => {
     const navigate = useNavigate();
 
@@ -38,6 +43,12 @@ const Sidebar: React.FC = () => {
         },
     ];
 
+    /**
+     * Compose utility classes for navigation links based on their active state.
+     *
+     * @param {boolean} isActive - Whether the nav item matches the current route.
+     * @returns {string} Tailwind class string for styling the nav item.
+     */
     const getNavLinkClass = (isActive: boolean) => {
         const baseClass =
             'group flex items-center gap-x-3 px-4 py-3 rounded-2xl transition-all duration-200 border backdrop-blur-sm shadow-sm';
@@ -46,6 +57,13 @@ const Sidebar: React.FC = () => {
             : `${baseClass} bg-white/70 text-slate-700 border-white/60 hover:border-indigo-100 hover:shadow-md hover:-translate-y-0.5`;
     };
 
+    /**
+     * Wrap menu icons with a gradient chip container.
+     *
+     * @param {React.ReactNode} icon - Icon element to display.
+     * @param {string} gradient - Tailwind gradient classes for the badge background.
+     * @returns {JSX.Element} Stylized icon capsule element.
+     */
     const renderIcon = (icon: React.ReactNode, gradient: string) => (
         <span
             className={`shrink-0 p-3 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-100/60 flex items-center justify-center`}

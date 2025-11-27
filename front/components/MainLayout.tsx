@@ -3,6 +3,11 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Sidebar from './Sidebar';
 
+/**
+ * Primary shell layout that anchors the persistent sidebar and header around routed content.
+ *
+ * @returns {JSX.Element} The application frame with decorative backgrounds and routed outlet.
+ */
 const MainLayout: React.FC = () => {
     return (
         <div className="relative min-h-screen overflow-x-hidden text-slate-800 floating-dots">

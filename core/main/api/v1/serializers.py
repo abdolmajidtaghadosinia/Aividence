@@ -2,6 +2,8 @@ from rest_framework import serializers
 from files.models import Audio, Subset
 
 class AudioListItemSerializer(serializers.ModelSerializer):
+    """Serializer returning concise audio metadata for dashboard listings."""
+
     subset_title = serializers.CharField(source='subset.title', read_only=True)
     file_name = serializers.SerializerMethodField()
     uploaded_at = serializers.DateTimeField(source='created_at', read_only=True)
@@ -17,14 +19,34 @@ class AudioListItemSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_file_name(self, obj):
+        """Resolve the friendly file name for the audio object.
+
+        Args:
+            obj (Audio): Audio instance being serialized.
+
+        Returns:
+            str: Preferred display name for the uploaded file.
+        """
         return obj.name
-        # try:
-        #     return obj.file.name.split('/')[-1]
-        # except Exception:
-        #     return obj.name
 
     def get_file_type_display(self, obj):
+        """Return the human-readable label for the audio file type.
+
+        Args:
+            obj (Audio): Audio instance being serialized.
+
+        Returns:
+            str: Display name for the file type choice field.
+        """
         return obj.get_file_type_display()
 
     def get_status_display(self, obj):
+        """Return the human-readable label for the processing status.
+
+        Args:
+            obj (Audio): Audio instance being serialized.
+
+        Returns:
+            str: Display label of the current processing status.
+        """
         return obj.get_status_display()

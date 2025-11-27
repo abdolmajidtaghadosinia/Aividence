@@ -6,7 +6,18 @@ from django.contrib.contenttypes.models import ContentType
 
 
 class UserManager(BaseUserManager):
+    """Manager for creating regular and superuser accounts using email as username."""
+
     def create_user(self, email, password=None):
+        """Create and persist a standard user with the given email and password.
+
+        Args:
+            email (str): Email address used as the unique identifier for authentication.
+            password (str, optional): Plain-text password to be hashed and stored. Defaults to None.
+
+        Returns:
+            User: Newly created user instance.
+        """
         if not email:
             raise ValueError("Users must have an email address")
 
@@ -19,6 +30,15 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None):
+        """Create and persist a superuser with staff and superuser privileges set.
+
+        Args:
+            email (str): Email address to assign to the superuser.
+            password (str, optional): Plain-text password to be hashed and stored. Defaults to None.
+
+        Returns:
+            User: Newly created superuser instance with elevated permissions.
+        """
         user = self.create_user(
             email=email,
             password=password,
@@ -30,13 +50,18 @@ class UserManager(BaseUserManager):
 
 # Create your models here.
 class BaseModel(models.Model):
+    """Abstract base model providing created/updated timestamps."""
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
 
+
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
+    """Custom user model using email as the login field and tracking profile flags."""
+
     email = models.EmailField(unique=True)
     password = models.CharField(max_length=255)
     is_active = models.BooleanField(default=True)
@@ -49,24 +74,37 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     objects = UserManager()
 
 
-
 class Department(BaseModel):
+    """Organizational department grouping profiles and permissions."""
+
     name = models.CharField(max_length=255)
     description = models.TextField()
+
 
 class Role(BaseModel):
+    """Role entity describing user duties and authorization scope."""
+
     name = models.CharField(max_length=255)
     description = models.TextField()
+
 
 class Permission(BaseModel):
+    """Granular permission that can be attached to roles."""
+
     name = models.CharField(max_length=255)
     description = models.TextField()
 
+
 class RolePermission(BaseModel):
+    """Mapping table assigning permissions to roles."""
+
     role = models.ForeignKey(Role, on_delete=models.CASCADE)
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE)
 
+
 class Profile(BaseModel):
+    """Extended profile information attached to a user account."""
+
     name = models.CharField(max_length=255)
     family = models.CharField(max_length=255)
     employee_id = models.CharField(max_length=255)
