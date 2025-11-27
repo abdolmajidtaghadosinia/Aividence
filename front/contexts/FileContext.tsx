@@ -71,7 +71,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const previousStatusesRef = useRef<Record<string, FileStatus>>({});
+  const previousFilesRef = useRef<Record<string, FileData>>({});
   const hasInitializedRef = useRef(false);
 
   const requestNotificationPermission = useCallback(async () => {
@@ -120,41 +120,60 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setError(null);
       const response: DashboardResponse = await getDashboardData();
       const convertedFiles = response.items.map(convertApiFileToFileData);
+      const previousFiles = previousFilesRef.current;
 
       const processingProgress = await Promise.all(
         convertedFiles.map(async (file) => {
-          if (file.status !== FileStatus.Processing || !file.task_id) return file;
+          const previousFile = previousFiles[file.id];
+          let mergedFile: FileData = {
+            ...file,
+            progress: previousFile?.progress,
+            progressLabel: previousFile?.progressLabel || file.statusDisplay || previousFile?.statusDisplay,
+          };
+
+          if (file.status !== FileStatus.Processing || !file.task_id) {
+            return mergedFile;
+          }
 
           try {
             const taskProgress = await getTaskProgress(file.task_id);
             const numericProgress = typeof taskProgress.progress === 'number'
               ? taskProgress.progress
               : parseFloat(String(taskProgress.progress).replace('%', ''));
+            const clampedProgress = Number.isFinite(numericProgress) ? numericProgress : mergedFile?.progress ?? 0;
+            const finalProgress = taskProgress.is_completed ? 100 : clampedProgress;
 
-            return {
-              ...file,
-              progress: Number.isFinite(numericProgress) ? numericProgress : 0,
-              progressLabel: taskProgress.status || file.statusDisplay,
+            mergedFile = {
+              ...mergedFile,
+              progress: finalProgress,
+              progressLabel: taskProgress.status || (taskProgress.is_completed ? 'پردازش تمام شد' : mergedFile?.progressLabel) || file.statusDisplay,
             } as FileData;
           } catch (progressError) {
             console.warn('Unable to fetch task progress', progressError);
-            return file;
           }
+
+          return mergedFile;
         })
       );
 
       if (notifyChanges) {
         processingProgress.forEach((file) => {
-          const previousStatus = previousStatusesRef.current[file.id];
-          if (previousStatus && previousStatus !== file.status) {
-            const statusLabel = file.statusDisplay || file.status || file.subCollection || 'به‌روزرسانی شد';
+          const previousFile = previousFiles[file.id];
+          if (!previousFile) return;
+
+          const statusChanged = previousFile.status !== file.status;
+          const statusDisplayChanged = previousFile.statusDisplay !== file.statusDisplay;
+          const progressLabelChanged = previousFile.progressLabel !== file.progressLabel && file.status === FileStatus.Processing;
+
+          if (statusChanged || statusDisplayChanged || progressLabelChanged) {
+            const statusLabel = file.statusDisplay || file.progressLabel || file.status || 'به‌روزرسانی شد';
             notifyStatusChange(file.name, statusLabel.toString());
           }
         });
       }
 
-      previousStatusesRef.current = processingProgress.reduce<Record<string, FileStatus>>((acc, file) => {
-        acc[file.id] = file.status;
+      previousFilesRef.current = processingProgress.reduce<Record<string, FileData>>((acc, file) => {
+        acc[file.id] = file;
         return acc;
       }, {});
 

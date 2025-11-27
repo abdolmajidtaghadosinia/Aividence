@@ -11,8 +11,8 @@ interface FileDetailsModalProps {
 
 const FileDetailsModal: React.FC<FileDetailsModalProps> = ({ file, onClose }) => {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 my-8 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
+        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[85vh]">
             <div className="p-6 border-b flex justify-between items-center">
                 <h3 className="text-xl font-bold text-gray-800">جزئیات فایل</h3>
                 <button onClick={onClose} className="text-gray-400 hover:text-gray-600">

@@ -55,6 +55,7 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const totalFiles = files.length;
     const processingCount = files.filter(f => f.status === FileStatus.Processing).length;
     const approvedCount = files.filter(f => f.status === FileStatus.Approved).length;
+    const rejectedCount = files.filter(f => f.status === FileStatus.Rejected).length;
 
     return (
         <>
@@ -153,8 +154,8 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                             <span className="text-slate-900 font-bold text-base">{approvedCount}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
-                            <span className="text-[11px] text-fuchsia-500 font-semibold">فایل باطل</span>
-                            <span className="text-slate-900 font-bold text-base">0</span>
+                            <span className="text-[11px] text-fuchsia-500 font-semibold">فایل رد شده</span>
+                            <span className="text-slate-900 font-bold text-base">{rejectedCount}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-amber-600 font-semibold">کل فایل</span>
