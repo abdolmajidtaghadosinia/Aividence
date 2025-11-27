@@ -3,8 +3,8 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
-import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
-import { exportCustomContentZip, getAudioTextByUuid } from '../api/api';
+import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon, TrashIcon, StopIcon } from '../components/Icons';
+import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
@@ -15,13 +15,40 @@ interface LayoutContext {
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { files, loading, error, refreshFiles } = useFiles();
+    const { files, loading, error, refreshFiles, removeFile } = useFiles();
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
+    const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; file: FileData } | null>(null);
+    const [isActing, setIsActing] = useState(false);
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
         setStatusFilter(status);
+    };
+
+    const openCancelModal = (file: FileData) => setConfirmAction({ type: 'cancel', file });
+    const openDeleteModal = (file: FileData) => setConfirmAction({ type: 'delete', file });
+
+    const handleConfirmAction = async () => {
+        if (!confirmAction) return;
+        const { file } = confirmAction;
+        if (!file.upload_uuid) {
+            setConfirmAction(null);
+            return;
+        }
+
+        setIsActing(true);
+        try {
+            await deleteAudioFile(file.upload_uuid);
+            removeFile(file.id);
+            await refreshFiles();
+        } catch (err) {
+            console.error('Unable to update file', err);
+            alert('خطا در انجام عملیات. لطفاً دوباره تلاش کنید.');
+        } finally {
+            setIsActing(false);
+            setConfirmAction(null);
+        }
     };
 
     const filteredFiles = useMemo(() => {
@@ -255,6 +282,24 @@ const DashboardPage: React.FC = () => {
                                                     <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
                                                         <DownloadIcon className="w-5 h-5" />
                                                     </button>
+                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
+                                                        <button
+                                                            onClick={() => openCancelModal(file)}
+                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
+                                                            title="توقف و حذف از صف"
+                                                        >
+                                                            <StopIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
+                                                        <button
+                                                            onClick={() => openDeleteModal(file)}
+                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
+                                                            title="حذف آیتم"
+                                                        >
+                                                            <TrashIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))
@@ -382,6 +427,45 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {selectedFile && <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} />}
+
+            {confirmAction && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${confirmAction.type === 'delete' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {confirmAction.type === 'delete' ? <TrashIcon className="w-5 h-5" /> : <StopIcon className="w-5 h-5" />}
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    {confirmAction.type === 'delete' ? 'حذف فایل از لیست' : 'توقف پردازش و حذف از صف'}
+                                </h3>
+                                <p className="text-sm text-slate-600">{confirmAction.file.name}</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                            {confirmAction.type === 'delete'
+                                ? 'با تایید، این فایل از لیست شما حذف می‌شود. آیا مطمئن هستید؟'
+                                : 'با تایید، پردازش این فایل متوقف شده و آیتم از صف حذف می‌شود. ادامه می‌دهید؟'}
+                        </p>
+                        <div className="flex items-center justify-end gap-3">
+                            <button
+                                onClick={() => setConfirmAction(null)}
+                                className="px-4 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                                disabled={isActing}
+                            >
+                                انصراف
+                            </button>
+                            <button
+                                onClick={handleConfirmAction}
+                                disabled={isActing}
+                                className={`px-4 py-2 text-sm rounded-xl text-white shadow-md ${confirmAction.type === 'delete' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-amber-500 hover:bg-amber-600'} disabled:opacity-60`}
+                            >
+                                {isActing ? 'در حال انجام...' : 'تایید و حذف'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

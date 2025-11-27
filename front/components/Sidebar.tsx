@@ -98,7 +98,6 @@ const Sidebar: React.FC = () => {
                                         <span className="text-sm font-bold">{item.label}</span>
                                         <span className="text-xs text-slate-500">{item.description}</span>
                                     </div>
-                                    <span className="ms-auto text-[11px] px-2 py-1 rounded-full bg-slate-100 text-slate-500">به زودی</span>
                                 </div>
                             ) : (
                                 <NavLink to={item.to!} className={({ isActive }) => getNavLinkClass(isActive)}>

@@ -9,6 +9,7 @@ interface FileContextType {
   addFile: (file: FileData) => void;
   getFileById: (id: string) => FileData | undefined;
   updateFile: (fileId: string, updates: Partial<FileData>) => void;
+  removeFile: (fileId: string) => void;
   refreshFiles: () => Promise<void>;
   checkFileStatus: (fileId: string) => Promise<void>;
   loading: boolean;
@@ -110,6 +111,16 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addFile = useCallback((file: FileData) => {
     setFiles(prevFiles => [file, ...prevFiles]);
+  }, []);
+
+  const removeFile = useCallback((fileId: string) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+    previousFilesRef.current = Object.keys(previousFilesRef.current).reduce<Record<string, FileData>>((acc, key) => {
+      if (key !== fileId) {
+        acc[key] = previousFilesRef.current[key];
+      }
+      return acc;
+    }, {});
   }, []);
 
   const syncFiles = useCallback(async (notifyChanges = false) => {
@@ -230,16 +241,17 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => clearInterval(interval);
   }, [syncFiles]);
   
-  const value = useMemo(() => ({ 
-    files, 
-    addFile, 
-    getFileById, 
-    updateFile, 
-    refreshFiles, 
+  const value = useMemo(() => ({
+    files,
+    addFile,
+    getFileById,
+    updateFile,
+    removeFile,
+    refreshFiles,
     checkFileStatus,
-    loading, 
-    error 
-  }), [files, addFile, getFileById, updateFile, refreshFiles, checkFileStatus, loading, error]);
+    loading,
+    error
+  }), [files, addFile, getFileById, updateFile, removeFile, refreshFiles, checkFileStatus, loading, error]);
 
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

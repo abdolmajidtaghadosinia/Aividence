@@ -331,6 +331,10 @@ export const getTaskProgress = async (taskId: string): Promise<TaskProgressRespo
     return Api.get<TaskProgressResponse>(`/api/v1/files/task/${taskId}/progress/`);
 };
 
+export const deleteAudioFile = async (uuid: string): Promise<IApiResponse> => {
+    return Api.delete<IApiResponse>(`/api/v1/files/audio/${uuid}/`);
+};
+
 // -----------------------------
 // Review (Audio Text) APIs
 // -----------------------------
