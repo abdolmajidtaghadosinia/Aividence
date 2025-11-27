@@ -4,6 +4,7 @@ import { FileData } from '../../types';
 import { STATUS_STYLES } from '../../constants';
 import { XIcon } from '../Icons';
 import ModalPortal from '../ModalPortal';
+import StructuredTextPreview from '../StructuredTextPreview';
 
 interface FileDetailsModalProps {
     file: FileData;
@@ -35,9 +36,14 @@ const FileDetailsModal: React.FC<FileDetailsModalProps> = ({ file, onClose }) =>
                             {file.editedText && (
                                 <div>
                                     <h4 className="font-semibold text-gray-700 mb-2">متن نهایی تایید شده:</h4>
-                                    <p className="text-gray-600 bg-green-50 p-4 rounded-lg border border-green-100 leading-relaxed whitespace-pre-wrap">
-                                        {file.editedText}
-                                    </p>
+                                    <div className="text-gray-700 bg-green-50 p-4 rounded-lg border border-green-100 leading-relaxed">
+                                        <StructuredTextPreview
+                                            text={file.editedText}
+                                            title={file.type || 'متن نهایی'}
+                                            subject={file.name}
+                                            dateValue={file.uploadDate}
+                                        />
+                                    </div>
                                 </div>
                             )}
                             <div>
