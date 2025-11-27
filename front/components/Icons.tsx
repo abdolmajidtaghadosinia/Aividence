@@ -10,15 +10,41 @@ export const LogoIcon: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 export const DashboardIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 11a8 8 0 0 1 16 0" />
+        <path d="M12 3v4" />
+        <path d="m6.4 13.2 1.6-1.2" />
+        <path d="m17.6 13.2-1.6-1.2" />
+        <path d="M12 12v6" />
+        <circle cx="12" cy="18" r="2" />
+    </svg>
 );
 
 export const UploadIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 17v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1" />
+        <path d="M12 3v12" />
+        <path d="m7 8 5-5 5 5" />
+    </svg>
 );
 
 export const DictionaryIcon: React.FC<{ className?: string }> = ({ className }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 4h11a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+        <path d="M14 2v4" />
+        <path d="M8 2v4" />
+        <path d="M8 10h6" />
+        <path d="M8 14h4" />
+    </svg>
+);
+
+export const AssistantIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 4c3.866 0 7 2.686 7 6 0 2.026-1.25 3.79-3.14 4.83l-.42.24-.53 3.13-2.3-2.06c-.2.02-.4.03-.61.03-3.866 0-7-2.686-7-6s3.134-6 7-6Z" />
+        <path d="m9 10 1 1 2-2" />
+        <path d="M9.5 14.5h.01" />
+        <path d="M14.5 9.5h.01" />
+    </svg>
 );
 
 export const UserIcon: React.FC<{ className?: string }> = ({ className }) => (

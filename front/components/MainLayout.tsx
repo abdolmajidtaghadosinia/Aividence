@@ -5,7 +5,7 @@ import Sidebar from './Sidebar';
 
 const MainLayout: React.FC = () => {
     return (
-        <div className="relative min-h-screen overflow-hidden text-slate-800 floating-dots">
+        <div className="relative min-h-screen overflow-x-hidden text-slate-800 floating-dots">
             <div className="pointer-events-none absolute -top-28 -left-24 w-80 h-80 bg-sky-100 blur-3xl opacity-70" />
             <div className="pointer-events-none absolute -bottom-28 -right-12 w-96 h-96 bg-amber-100 blur-3xl opacity-70" />
             <div className="pointer-events-none absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-100 blur-[100px] opacity-70" />
