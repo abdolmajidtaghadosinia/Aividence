@@ -1,29 +1,61 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
-import { SearchIcon, EyeIcon, DownloadIcon, PlusIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
-import { exportCustomContentZip, getAudioTextByUuid } from '../api/api';
+import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon, TrashIcon, StopIcon } from '../components/Icons';
+import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
+import ModalPortal from '../components/ModalPortal';
+
+interface LayoutContext {
+    headerSearchTerm: string;
+}
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { files, loading, error, refreshFiles } = useFiles();
-    const [searchTerm, setSearchTerm] = useState('');
+    const { files, loading, error, refreshFiles, removeFile } = useFiles();
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
+    const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; file: FileData } | null>(null);
+    const [isActing, setIsActing] = useState(false);
+    const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
         setStatusFilter(status);
     };
 
+    const openCancelModal = (file: FileData) => setConfirmAction({ type: 'cancel', file });
+    const openDeleteModal = (file: FileData) => setConfirmAction({ type: 'delete', file });
+
+    const handleConfirmAction = async () => {
+        if (!confirmAction) return;
+        const { file } = confirmAction;
+        if (!file.upload_uuid) {
+            setConfirmAction(null);
+            return;
+        }
+
+        setIsActing(true);
+        try {
+            await deleteAudioFile(file.upload_uuid);
+            removeFile(file.id);
+            await refreshFiles();
+        } catch (err) {
+            console.error('Unable to update file', err);
+            alert('خطا در انجام عملیات. لطفاً دوباره تلاش کنید.');
+        } finally {
+            setIsActing(false);
+            setConfirmAction(null);
+        }
+    };
+
     const filteredFiles = useMemo(() => {
         return files
             .filter(file => {
-                const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearch = file.name.toLowerCase().includes(headerSearchTerm.toLowerCase());
                 const matchesStatus = statusFilter === 'all' || file.status === statusFilter;
                 return matchesSearch && matchesStatus;
             })
@@ -32,7 +64,7 @@ const DashboardPage: React.FC = () => {
                 const dateB = new Date(b.uploadDate.replace(/\//g, '-')).getTime();
                 return dateB - dateA;
             });
-    }, [files, searchTerm, statusFilter]);
+    }, [files, headerSearchTerm, statusFilter]);
 
     const stats = useMemo(() => ({
         total: files.length,
@@ -147,62 +179,6 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 soft-card rounded-3xl p-6 flex flex-col gap-4">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <p className="text-sm text-slate-500">مرور کلی امروز</p>
-                            <h2 className="text-2xl font-black text-slate-900">همه چیز برای مدیریت فایل‌های صوتی آماده است</h2>
-                            <p className="text-slate-500 mt-2">روند آپلود و تایید را در یک نما ببینید و سریعا اقدام کنید.</p>
-                        </div>
-                        <button
-                            onClick={() => navigate('/upload')}
-                            className="pill-button px-4 py-3 rounded-2xl flex items-center gap-2 text-sm font-bold transition hover:shadow-xl"
-                        >
-                            <PlusIcon className="w-5 h-5" />
-                            <span>ایجاد بارگذاری جدید</span>
-                        </button>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                        <div className="px-4 py-2 rounded-2xl bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
-                            {toPersianDigits(stats.processing)} فایل در حال پردازش
-                        </div>
-                        <div className="px-4 py-2 rounded-2xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
-                            {toPersianDigits(stats.approved)} تایید شده نهایی
-                        </div>
-                        <div className="px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">
-                            {toPersianDigits(stats.pending)} در انتظار پردازش
-                        </div>
-                    </div>
-                </div>
-                <div className="glass-panel rounded-3xl p-6 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-slate-500">نرخ تکمیل</p>
-                            <h3 className="text-2xl font-bold text-slate-900">{toPersianDigits(completionRate)}%</h3>
-                        </div>
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-sky-400/20 flex items-center justify-center">
-                            <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center text-indigo-600 font-black text-lg">
-                                {toPersianDigits(stats.total)}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">در انتظار</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.pending)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">در حال پردازش</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.processing)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">تایید شده</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.approved)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
                 <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
@@ -229,25 +205,13 @@ const DashboardPage: React.FC = () => {
                     <div className="glass-panel rounded-3xl p-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
-                            <div className="flex flex-wrap gap-2 items-center">
-                                <button
-                                    onClick={refreshFiles}
-                                    className="px-3 py-2 text-sm pill-button rounded-xl hover:shadow-xl transition"
-                                    title="بروزرسانی"
-                                >
-                                    🔄
-                                </button>
-                                <div className="relative w-full md:w-64">
-                                    <input
-                                        type="text"
-                                        placeholder="جستجوی فایل صوتی..."
-                                        className="w-full pl-10 pr-4 py-2 border border-white/70 rounded-xl bg-white/80 focus:ring-indigo-500 focus:border-indigo-400"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                </div>
-                            </div>
+                            <button
+                                onClick={refreshFiles}
+                                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition"
+                                title="بروزرسانی"
+                            >
+                                🔄
+                            </button>
                         </div>
 
                         <div className="overflow-x-auto">
@@ -269,7 +233,7 @@ const DashboardPage: React.FC = () => {
                                                     <div className="text-4xl mb-2">📁</div>
                                                     <p className="text-lg font-medium mb-1">فایل صوتی یافت نشد</p>
                                                     <p className="text-sm">
-                                                        {searchTerm || statusFilter !== 'all'
+                                                        {headerSearchTerm || statusFilter !== 'all'
                                                             ? 'فایل صوتی‌هایی با این فیلتر وجود ندارد'
                                                             : 'هنوز فایل صوتیی آپلود نشده است'}
                                                     </p>
@@ -284,7 +248,29 @@ const DashboardPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">{file.uploadDate}</td>
                                                 <td className="px-6 py-4 hidden md:table-cell">{file.type}</td>
-                                                <td className="px-6 py-4">{renderStatusBadge(file.status)}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="space-y-2">
+                                                        {renderStatusBadge(file.status)}
+                                                        {file.status === FileStatus.Processing && (
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                                    <span className="truncate max-w-[180px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
+                                                                        {file.progressLabel || 'در حال ترنسکرایب...'}
+                                                                    </span>
+                                                                    <span className="font-bold text-slate-800">
+                                                                        {toPersianDigits(Math.round(file.progress ?? 0))}%
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-full h-2.5 bg-indigo-50 rounded-full overflow-hidden border border-indigo-100/60 shadow-inner">
+                                                                    <div
+                                                                        className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700"
+                                                                        style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4 flex items-center gap-x-2">
                                                     <button
                                                         onClick={() => handleViewClick(file)}
@@ -297,6 +283,24 @@ const DashboardPage: React.FC = () => {
                                                     <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
                                                         <DownloadIcon className="w-5 h-5" />
                                                     </button>
+                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
+                                                        <button
+                                                            onClick={() => openCancelModal(file)}
+                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
+                                                            title="توقف و حذف از صف"
+                                                        >
+                                                            <StopIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
+                                                        <button
+                                                            onClick={() => openDeleteModal(file)}
+                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
+                                                            title="حذف آیتم"
+                                                        >
+                                                            <TrashIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))
@@ -320,12 +324,27 @@ const DashboardPage: React.FC = () => {
                                     <li className="text-sm text-slate-500">صف پردازش خالی است.</li>
                                 )}
                                 {processingQueue.map((file) => (
-                                    <li key={file.id} className="flex items-center justify-between bg-white/80 border border-white/70 rounded-2xl px-4 py-3 shadow-sm">
-                                        <div>
-                                            <p className="font-semibold text-slate-800">{file.name}</p>
-                                            <p className="text-xs text-slate-500">{file.subCollection}</p>
+                                    <li key={file.id} className="flex flex-col gap-2 bg-white/80 border border-white/70 rounded-2xl px-4 py-3 shadow-sm">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-slate-800 truncate" title={file.name}>{file.name}</p>
+                                                <p className="text-xs text-slate-500">{file.subCollection}</p>
+                                            </div>
+                                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">{file.status === FileStatus.Processing ? 'در حال پردازش' : 'در انتظار'}</span>
                                         </div>
-                                        <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">{file.status === FileStatus.Processing ? 'در حال پردازش' : 'در انتظار'}</span>
+                                        {file.status === FileStatus.Processing && (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                    <span className="truncate max-w-[150px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
+                                                        {file.progressLabel || 'در حال ترنسکرایب...'}
+                                                    </span>
+                                                    <span className="font-bold text-slate-800">{toPersianDigits(Math.round(file.progress ?? 0))}%</span>
+                                                </div>
+                                                <div className="w-full h-2 rounded-full bg-indigo-50 overflow-hidden border border-indigo-100/60">
+                                                    <div className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700" style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -409,6 +428,47 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {selectedFile && <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} />}
+
+            {confirmAction && (
+                <ModalPortal>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${confirmAction.type === 'delete' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    {confirmAction.type === 'delete' ? <TrashIcon className="w-5 h-5" /> : <StopIcon className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">
+                                        {confirmAction.type === 'delete' ? 'حذف فایل از لیست' : 'توقف پردازش و حذف از صف'}
+                                    </h3>
+                                    <p className="text-sm text-slate-600">{confirmAction.file.name}</p>
+                                </div>
+                            </div>
+                            <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                                {confirmAction.type === 'delete'
+                                    ? 'با تایید، این فایل از لیست شما حذف می‌شود. آیا مطمئن هستید؟'
+                                    : 'با تایید، پردازش این فایل متوقف شده و آیتم از صف حذف می‌شود. ادامه می‌دهید؟'}
+                            </p>
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setConfirmAction(null)}
+                                    className="px-4 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                                    disabled={isActing}
+                                >
+                                    انصراف
+                                </button>
+                                <button
+                                    onClick={handleConfirmAction}
+                                    disabled={isActing}
+                                    className={`px-4 py-2 text-sm rounded-xl text-white shadow-md ${confirmAction.type === 'delete' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-amber-500 hover:bg-amber-600'} disabled:opacity-60`}
+                                >
+                                    {isActing ? 'در حال انجام...' : 'تایید و حذف'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ModalPortal>
+            )}
         </div>
     );
 };

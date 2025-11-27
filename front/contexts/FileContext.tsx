@@ -1,14 +1,15 @@
 
-import React, { useState, createContext, useContext, useMemo, ReactNode, useCallback, useEffect } from 'react';
+import React, { useState, createContext, useContext, useMemo, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { FileData, FileStatus, AudioFileItem, DashboardResponse } from '../types';
 import { MOCK_FILES } from '../constants';
-import { getDashboardData, checkFileStatus } from '../api/api';
+import { getDashboardData, checkFileStatus as fetchFileStatus, getTaskProgress } from '../api/api';
 
 interface FileContextType {
   files: FileData[];
   addFile: (file: FileData) => void;
   getFileById: (id: string) => FileData | undefined;
   updateFile: (fileId: string, updates: Partial<FileData>) => void;
+  removeFile: (fileId: string) => void;
   refreshFiles: () => Promise<void>;
   checkFileStatus: (fileId: string) => Promise<void>;
   loading: boolean;
@@ -31,6 +32,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
   const statusMap: { [key: string]: FileStatus } = {
     'AP': FileStatus.Pending,
     'P': FileStatus.Processing,
+    'Pr': FileStatus.Processing,
     'PD': FileStatus.Processed,
     'A': FileStatus.Approved,
     'E': FileStatus.Rejected, // خطا را به عنوان رد شده نمایش می‌دهیم
@@ -49,13 +51,19 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     return `${persianYear}/${month}/${day}`;
   };
 
+  const statusDisplay = apiFile.status_display || '';
+  const mappedStatus = statusMap[apiFile.status]
+    || (statusDisplay.includes('پردازش') ? FileStatus.Processing : FileStatus.Pending);
+
   return {
     id: apiFile.id.toString(),
     name: apiFile.file_name,
     uploadDate: formatPersianDate(apiFile.uploaded_at),
     type: apiFile.file_type_display,
     subCollection: apiFile.subset_title,
-    status: statusMap[apiFile.status] || FileStatus.Pending,
+    status: mappedStatus,
+    statusDisplay,
+    task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
   } as FileData;
 };
@@ -64,6 +72,30 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const previousFilesRef = useRef<Record<string, FileData>>({});
+  const hasInitializedRef = useRef(false);
+
+  const requestNotificationPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (err) {
+        console.warn('Notification permission request failed:', err);
+      }
+    }
+  }, []);
+
+  const notifyStatusChange = useCallback((fileName: string, statusLabel: string) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+
+    if (Notification.permission === 'granted') {
+      new Notification('وضعیت پردازش به‌روزرسانی شد', {
+        body: `${fileName}: ${statusLabel}`,
+      });
+    }
+  }, []);
 
   const getFileById = useCallback((id: string) => {
     return files.find(f => f.id === id);
@@ -79,20 +111,85 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addFile = useCallback((file: FileData) => {
     setFiles(prevFiles => [file, ...prevFiles]);
+  }, []);
 
-    // Simulate backend processing time
-    setTimeout(() => {
-      updateFile(file.id, { status: FileStatus.Pending });
-    }, 5000); // 5-second delay
-  }, [updateFile]);
+  const removeFile = useCallback((fileId: string) => {
+    setFiles((prevFiles) => prevFiles.filter((file) => file.id !== fileId));
+    previousFilesRef.current = Object.keys(previousFilesRef.current).reduce<Record<string, FileData>>((acc, key) => {
+      if (key !== fileId) {
+        acc[key] = previousFilesRef.current[key];
+      }
+      return acc;
+    }, {});
+  }, []);
 
-  const refreshFiles = useCallback(async () => {
+  const syncFiles = useCallback(async (notifyChanges = false) => {
     try {
-      setLoading(true);
+      if (!hasInitializedRef.current) {
+        setLoading(true);
+      }
       setError(null);
       const response: DashboardResponse = await getDashboardData();
       const convertedFiles = response.items.map(convertApiFileToFileData);
-      setFiles(convertedFiles);
+      const previousFiles = previousFilesRef.current;
+
+      const processingProgress = await Promise.all(
+        convertedFiles.map(async (file) => {
+          const previousFile = previousFiles[file.id];
+          let mergedFile: FileData = {
+            ...file,
+            progress: previousFile?.progress,
+            progressLabel: previousFile?.progressLabel || file.statusDisplay || previousFile?.statusDisplay,
+          };
+
+          if (file.status !== FileStatus.Processing || !file.task_id) {
+            return mergedFile;
+          }
+
+          try {
+            const taskProgress = await getTaskProgress(file.task_id);
+            const numericProgress = typeof taskProgress.progress === 'number'
+              ? taskProgress.progress
+              : parseFloat(String(taskProgress.progress).replace('%', ''));
+            const clampedProgress = Number.isFinite(numericProgress) ? numericProgress : mergedFile?.progress ?? 0;
+            const finalProgress = taskProgress.is_completed ? 100 : clampedProgress;
+
+            mergedFile = {
+              ...mergedFile,
+              progress: finalProgress,
+              progressLabel: taskProgress.status || (taskProgress.is_completed ? 'پردازش تمام شد' : mergedFile?.progressLabel) || file.statusDisplay,
+            } as FileData;
+          } catch (progressError) {
+            console.warn('Unable to fetch task progress', progressError);
+          }
+
+          return mergedFile;
+        })
+      );
+
+      if (notifyChanges) {
+        processingProgress.forEach((file) => {
+          const previousFile = previousFiles[file.id];
+          if (!previousFile) return;
+
+          const statusChanged = previousFile.status !== file.status;
+          const statusDisplayChanged = previousFile.statusDisplay !== file.statusDisplay;
+          const progressLabelChanged = previousFile.progressLabel !== file.progressLabel && file.status === FileStatus.Processing;
+
+          if (statusChanged || statusDisplayChanged || progressLabelChanged) {
+            const statusLabel = file.statusDisplay || file.progressLabel || file.status || 'به‌روزرسانی شد';
+            notifyStatusChange(file.name, statusLabel.toString());
+          }
+        });
+      }
+
+      previousFilesRef.current = processingProgress.reduce<Record<string, FileData>>((acc, file) => {
+        acc[file.id] = file;
+        return acc;
+      }, {});
+
+      setFiles(processingProgress);
+      hasInitializedRef.current = true;
     } catch (err: any) {
       console.error('Error fetching files:', err);
       setError(err.message || 'خطا در بارگذاری فایل‌ها');
@@ -101,11 +198,15 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [notifyStatusChange]);
+
+  const refreshFiles = useCallback(async () => {
+    await syncFiles(true);
+  }, [syncFiles]);
 
   const checkFileStatus = useCallback(async (fileId: string) => {
     try {
-      const response = await checkFileStatus(parseInt(fileId));
+      const response = await fetchFileStatus(parseInt(fileId));
       if (response.success) {
         // Map API status to FileStatus enum
         const statusMap: { [key: string]: FileStatus } = {
@@ -116,7 +217,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           'E': FileStatus.Rejected,
           'R': FileStatus.Rejected,
         };
-        
+
         const newStatus = statusMap[response.current_status] || FileStatus.Pending;
         updateFile(fileId, { status: newStatus });
       }
@@ -127,19 +228,30 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Load files on mount
   useEffect(() => {
-    refreshFiles();
-  }, [refreshFiles]);
+    requestNotificationPermission();
+    syncFiles(false);
+  }, [requestNotificationPermission, syncFiles]);
+
+  // Keep statuses updated automatically
+  useEffect(() => {
+    const interval = setInterval(() => {
+      syncFiles(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [syncFiles]);
   
-  const value = useMemo(() => ({ 
-    files, 
-    addFile, 
-    getFileById, 
-    updateFile, 
-    refreshFiles, 
+  const value = useMemo(() => ({
+    files,
+    addFile,
+    getFileById,
+    updateFile,
+    removeFile,
+    refreshFiles,
     checkFileStatus,
-    loading, 
-    error 
-  }), [files, addFile, getFileById, updateFile, refreshFiles, checkFileStatus, loading, error]);
+    loading,
+    error
+  }), [files, addFile, getFileById, updateFile, removeFile, refreshFiles, checkFileStatus, loading, error]);
 
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

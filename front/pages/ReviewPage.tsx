@@ -30,8 +30,9 @@ const ReviewPage: React.FC = () => {
             try {
                 const res = await getAudioTextByUuid(file.upload_uuid);
                 const updated: Partial<FileData> = {
-                    originalText: res.original_text || '',
-                    editedText: res.custom_text || '',
+                    processedText: res.processed_text || res.original_text || '',
+                    originalText: res.original_text || res.processed_text || '',
+                    editedText: res.custom_text || res.processed_text || res.original_text || '',
                 };
                 setFileData({ ...file, ...updated });
             } catch (e) {
@@ -85,7 +86,11 @@ const ReviewPage: React.FC = () => {
         <div className="soft-card p-6 rounded-3xl shadow-xl border border-white/80">
             <div className="flex flex-col lg:flex-row gap-8 items-start">
                 <VerticalStepper currentStep={currentStep} steps={reviewSteps} />
-                <div className="w-full lg:flex-1">
+                <div className="w-full lg:flex-1 space-y-4">
+                    <div className="frosted-chip px-3 py-2 rounded-2xl inline-flex items-center gap-2 text-xs text-indigo-700 font-semibold">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                        <span>بازبینی دقیق • مرحله {currentStep + 1}</span>
+                    </div>
                     {renderStep()}
                 </div>
             </div>

@@ -12,6 +12,11 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import ReviewPage from './pages/ReviewPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
+/**
+ * Root application component that wires routing, authentication, and file context providers.
+ *
+ * @returns {JSX.Element} Router-driven layout for all application pages.
+ */
 function App() {
   return (
     <AuthProvider>

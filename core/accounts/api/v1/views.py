@@ -6,12 +6,22 @@ from accounts.models import User, Profile, Department, Role
 
 
 class UserInfo(APIView):
+    """Expose authenticated user information along with related profile metadata."""
+
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Return the current user's details, falling back to defaults when no profile exists.
+
+        Args:
+            request (HttpRequest): Incoming HTTP request containing the authenticated user context.
+
+        Returns:
+            Response: Serialized user and profile attributes suitable for dashboard consumption.
+        """
         user = request.user
-        
+
         # تلاش برای دریافت پروفایل کاربر
         try:
             profile = Profile.objects.get(user=user)
@@ -37,5 +47,5 @@ class UserInfo(APIView):
                 'employee_id': str(user.id),
                 'department': 'فناوری اطلاعات',
             }
-        
+
         return Response(user_data)

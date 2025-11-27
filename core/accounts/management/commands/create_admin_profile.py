@@ -3,20 +3,28 @@ from accounts.models import User, Profile, Department, Role
 
 
 class Command(BaseCommand):
+    """Management command that bootstraps an admin profile with default role/department."""
+
     help = 'Create profile for admin user'
 
     def handle(self, *args, **options):
+        """Create a profile for the admin user if it does not already exist.
+
+        This command looks up the default admin account, ensures prerequisite role and
+        department records exist, and binds them to a new Profile entry. Progress and
+        error messages are written to stdout for operator visibility.
+        """
         try:
             # دریافت کاربر admin
             admin_user = User.objects.get(email='admin@example.com')
-            
+
             # بررسی وجود پروفایل
             if hasattr(admin_user, 'profile'):
                 self.stdout.write(
                     self.style.WARNING('پروفایل برای کاربر admin قبلاً وجود دارد')
                 )
                 return
-            
+
             # ایجاد دپارتمان پیش‌فرض
             department, created = Department.objects.get_or_create(
                 name='مدیریت',
@@ -24,7 +32,7 @@ class Command(BaseCommand):
             )
             if created:
                 self.stdout.write('دپارتمان "مدیریت" ایجاد شد')
-            
+
             # ایجاد نقش پیش‌فرض
             role, created = Role.objects.get_or_create(
                 name='مدیر سیستم',
@@ -32,7 +40,7 @@ class Command(BaseCommand):
             )
             if created:
                 self.stdout.write('نقش "مدیر سیستم" ایجاد شد')
-            
+
             # ایجاد پروفایل
             profile = Profile.objects.create(
                 user=admin_user,
@@ -42,11 +50,11 @@ class Command(BaseCommand):
                 department=department,
                 role=role
             )
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'پروفایل برای کاربر admin با موفقیت ایجاد شد (ID: {profile.id})')
             )
-            
+
         except User.DoesNotExist:
             self.stdout.write(
                 self.style.ERROR('کاربر admin یافت نشد')
