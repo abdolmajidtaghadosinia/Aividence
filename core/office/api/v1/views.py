@@ -89,6 +89,8 @@ class ExportCustomContentZipView(APIView):
         pdf_buf = io.BytesIO()
         if canvas is None:
             return Response({'detail': 'reportlab نصب نیست.'}, status=500)
+
+        # Register a Persian-friendly font when available for proper glyph rendering.
         font_name = None
         if pdfmetrics is not None and TTFont is not None:
             for font_path in [
@@ -103,21 +105,59 @@ class ExportCustomContentZipView(APIView):
                         break
                     except Exception:
                         continue
+
+        def _wrap_line(text, max_width, active_font):
+            """Wrap a single line to the maximum width based on the active font metrics."""
+
+            if not text:
+                return [""]
+
+            # Fallback to a naive character-based wrap when metrics are unavailable.
+            if pdfmetrics is None or active_font is None:
+                import textwrap
+
+                return textwrap.wrap(text, width=80) or [""]
+
+            words = text.split()
+            wrapped, current = [], ""
+            for word in words:
+                candidate = word if not current else f"{current} {word}"
+                if (
+                    pdfmetrics.stringWidth(candidate, active_font, 12)
+                    <= max_width
+                ):
+                    current = candidate
+                else:
+                    if current:
+                        wrapped.append(current)
+                    current = word
+            if current:
+                wrapped.append(current)
+            return wrapped or [""]
+
         c = canvas.Canvas(pdf_buf, pagesize=A4 or (595, 842))
         width, height = (A4 or (595, 842))
-        x, y = 40, height - 60
-        line_height = 16
-        if font_name:
-            c.setFont(font_name, 12)
-        for line in content.splitlines() or ['']:
-            if y < 60:
-                c.showPage()
-                if font_name:
-                    c.setFont(font_name, 12)
-                y = height - 60
-            c.drawString(x, y, line)
-            y -= line_height
-        c.showPage()
+        margin = 48
+        line_height = 18
+        start_y = height - margin
+        text_x = width - margin  # Right-aligned for Persian content.
+        active_font = font_name or c._fontname
+        c.setFont(active_font, 12)
+
+        y = start_y
+        for paragraph in content.splitlines() or [""]:
+            max_width = width - (margin * 2)
+            wrapped_lines = _wrap_line(paragraph, max_width, active_font)
+            for line in wrapped_lines:
+                if y < margin:
+                    c.showPage()
+                    c.setFont(active_font, 12)
+                    y = start_y
+                c.drawRightString(text_x, y, line)
+                y -= line_height
+            # Extra spacing between paragraphs.
+            y -= 4
+
         c.save()
         pdf_buf.seek(0)
 
