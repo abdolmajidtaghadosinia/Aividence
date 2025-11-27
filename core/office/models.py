@@ -13,7 +13,7 @@ class KeywordList(BaseModel):
 
 
 class AudioFileText(BaseModel):
-    file =models.ForeignKey(Audio, on_delete=models.DO_NOTHING)
+    file = models.ForeignKey(Audio, on_delete=models.CASCADE)
     content_file =models.TextField(blank=True,null=True)
     content_processed =models.TextField(blank=True,null=True)
     custom_content=models.TextField(blank=True,null=True)
