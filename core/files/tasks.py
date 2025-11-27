@@ -13,7 +13,27 @@ from django.conf import settings
 from files.models import Audio
 from office.models import AudioFileText
 from main.models import Prompt
+from celery import states
+
 logger = logging.getLogger(__name__)
+
+
+def raise_task_failure(task, message, progress=0):
+    """Register a Celery failure state with proper exception metadata and raise."""
+    try:
+        task.update_state(
+            state=states.FAILURE,
+            meta={
+                'exc_type': 'RuntimeError',
+                'exc_message': message,
+                'exc_module': 'builtins',
+                'progress': progress,
+                'status': message,
+            },
+        )
+    except Exception:
+        logger.debug("⚠️ ثبت وضعیت خطا در Celery ناموفق بود")
+    raise RuntimeError(message)
 
 
 def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
@@ -315,11 +335,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                         if status_flag == 'E':
                             logger.error(f"❌ خطا در تبدیل: {text}")
                             update_audio_status(audio_id, 'E')
-                            try:
-                                self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(text)})
-                            except Exception:
-                                logger.debug("⚠️ ثبت خطا در وضعیت Celery ناموفق بود")
-                            return text
+                            raise_task_failure(self, str(text))
 
                         # اگر همچنان در حال پردازش است، منتظر بمانیم
                         if status_flag == 'Pr':
@@ -345,11 +361,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                             if time.time() - start_time > max_wait_seconds:
                                 logger.error(f"⏰ تایم‌اوت - بیش از {max_wait_seconds/60:.0f} دقیقه انتظار")
                                 update_audio_status(audio_id, 'E')
-                                try:
-                                    self.update_state(state='FAILURE', meta={'progress': numeric_progress, 'status': 'تایم‌اوت در پردازش'})
-                                except Exception:
-                                    logger.debug("⚠️ ثبت تایم‌اوت در Celery ناموفق بود")
-                                return {"error": "Timeout waiting for conversion", "status": 'E'}
+                                raise_task_failure(self, 'تایم‌اوت در پردازش', numeric_progress)
 
                             logger.info("⏳ انتظار 5 ثانیه...")
                             time.sleep(5)
@@ -392,11 +404,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
             else:
                 logger.error(f"❌ خطا در شروع تبدیل: {convert_result}")
                 update_audio_status(audio_id, 'E')
-                try:
-                    self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در شروع تبدیل'})
-                except Exception:
-                    logger.debug("⚠️ ثبت خطای شروع تبدیل در Celery ناموفق بود")
-                return {"error": "خطا در شروع تبدیل گفتار به متن", "status": 'E'}
+                raise_task_failure(self, 'خطا در شروع تبدیل گفتار به متن')
         else:
             logger.error(f"❌ خطا در آپلود فایل: {file_token}")
             error_status = None
@@ -416,20 +424,12 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                     return {"error": "اعتبار سرویس پردازش کافی نیست. لطفاً پس از شارژ مجدد دوباره تلاش کنید.", "status": 'AP'}
 
             update_audio_status(audio_id, 'E')
-            try:
-                self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در آپلود فایل'})
-            except Exception:
-                logger.debug("⚠️ ثبت خطای آپلود در Celery ناموفق بود")
-            return {"error": "خطا در آپلود فایل", "status": 'E'}
+            raise_task_failure(self, 'خطا در آپلود فایل')
 
     except Exception as e:
         logger.error(f"❌ خطای کلی در پردازش: {str(e)}")
         update_audio_status(audio_id, 'E')
-        try:
-            self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(e)})
-        except Exception:
-            logger.debug("⚠️ ثبت خطای کلی در Celery ناموفق بود")
-        return {"error": str(e), "status": 'E'}
+        raise_task_failure(self, str(e))
 
     return {"success": True, "audio_id": audio_id, "status": 'P'}
 
