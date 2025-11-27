@@ -179,7 +179,7 @@ const DashboardPage: React.FC = () => {
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
                             <button
                                 onClick={refreshFiles}
-                                className="px-3 py-2 text-sm pill-button rounded-xl hover:shadow-xl transition"
+                                className="px-3 py-2 text-sm rounded-xl border border-slate-200 bg-white/80 text-slate-600 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition"
                                 title="بروزرسانی"
                             >
                                 🔄
