@@ -52,7 +52,18 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const toEnglishDigits = (value: string | undefined) => (value || '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+
     const filteredFiles = useMemo(() => {
+        const getSortableDateValue = (file: FileData) => {
+            if (file.uploadedAt) {
+                return new Date(file.uploadedAt).getTime();
+            }
+            const normalized = file.uploadDate ? toEnglishDigits(file.uploadDate).replace(/\//g, '-') : '';
+            const parsed = normalized ? Date.parse(normalized) : 0;
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
         return files
             .filter(file => {
                 const matchesSearch = file.name.toLowerCase().includes(headerSearchTerm.toLowerCase());
@@ -60,8 +71,8 @@ const DashboardPage: React.FC = () => {
                 return matchesSearch && matchesStatus;
             })
             .sort((a, b) => {
-                const dateA = new Date(a.uploadDate.replace(/\//g, '-')).getTime();
-                const dateB = new Date(b.uploadDate.replace(/\//g, '-')).getTime();
+                const dateA = getSortableDateValue(a);
+                const dateB = getSortableDateValue(b);
                 return dateB - dateA;
             });
     }, [files, headerSearchTerm, statusFilter]);
@@ -108,6 +119,40 @@ const DashboardPage: React.FC = () => {
     const completionRate = stats.total ? Math.round((stats.approved / stats.total) * 100) : 0;
 
     const activeFilterText = statusFilter === 'all' ? '' : ` (فیلتر: ${statusFilter})`;
+
+    const formatPersianDateTime = (file: FileData) => {
+        const dateObject = file.uploadedAt ? new Date(file.uploadedAt) : null;
+        if (dateObject && !isNaN(dateObject.getTime())) {
+            const dateFormatter = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeFormatter = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return {
+                date: dateFormatter.format(dateObject),
+                time: timeFormatter.format(dateObject),
+            };
+        }
+
+        if (file.lastUpdatedLabel) {
+            const [rawDate, rawTime] = file.lastUpdatedLabel.split('•').map((part) => part.trim());
+            return {
+                date: rawDate,
+                time: rawTime || '',
+            };
+        }
+
+        const numericDate = file.uploadDate ? toEnglishDigits(file.uploadDate) : '';
+        return {
+            date: file.uploadDate || '',
+            time: '',
+            numericDate,
+        };
+    };
+
+    const getSummaryLine = (file: FileData) => {
+        const content = file.processedText || file.editedText || file.originalText;
+        if (!content) return '';
+        const normalized = content.replace(/\s+/g, ' ').trim();
+        return normalized.length > 90 ? `${normalized.slice(0, 90)}…` : normalized;
+    };
 
     const renderStatusBadge = (status: FileStatus) => {
         const { bg, text, dot } = STATUS_STYLES[status];
@@ -241,12 +286,24 @@ const DashboardPage: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredFiles.map((file, index) => (
+                                        filteredFiles.map((file, index) => {
+                                            const summary = getSummaryLine(file);
+                                            const { date, time } = formatPersianDateTime(file);
+
+                                            return (
                                             <tr key={file.id} className="bg-white border-b hover:bg-gray-50 table-row-animate" style={{ animationDelay: `${index * 45}ms` }}>
-                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[150px] truncate" title={file.name}>
-                                                    {file.name}
+                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
+                                                    <div className="truncate" title={file.name}>{file.name}</div>
+                                                    <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
                                                 </td>
-                                                <td className="px-6 py-4">{file.uploadDate}</td>
+                                                <td className="px-6 py-4 align-top">
+                                                    <div className="space-y-1 text-[13px] text-slate-700">
+                                                        <div className="font-semibold">{date && toPersianDigits(date)}</div>
+                                                        {time && (
+                                                            <div className="text-xs text-slate-500">آخرین تغییر: {toPersianDigits(time)}</div>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4 hidden md:table-cell">{file.type}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="space-y-2">
@@ -271,39 +328,49 @@ const DashboardPage: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 flex items-center gap-x-2">
-                                                    <button
-                                                        onClick={() => handleViewClick(file)}
-                                                        className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        title="مشاهده جزئیات"
-                                                        disabled={file.status === FileStatus.Processing}
-                                                    >
-                                                        <EyeIcon className="w-5 h-5"/>
-                                                    </button>
-                                                    <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
-                                                        <DownloadIcon className="w-5 h-5" />
-                                                    </button>
-                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
-                                                        <button
-                                                            onClick={() => openCancelModal(file)}
-                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
-                                                            title="توقف و حذف از صف"
-                                                        >
-                                                            <StopIcon className="w-5 h-5" />
-                                                        </button>
-                                                    )}
-                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
-                                                        <button
-                                                            onClick={() => openDeleteModal(file)}
-                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
-                                                            title="حذف آیتم"
-                                                        >
-                                                            <TrashIcon className="w-5 h-5" />
-                                                        </button>
-                                                    )}
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col gap-2">
+                                                        {summary && (
+                                                            <p className="text-xs text-slate-500 max-w-[260px] truncate" title={summary}>
+                                                                {summary}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-x-2">
+                                                            <button
+                                                                onClick={() => handleViewClick(file)}
+                                                                className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                title="مشاهده جزئیات"
+                                                                disabled={file.status === FileStatus.Processing}
+                                                            >
+                                                                <EyeIcon className="w-5 h-5"/>
+                                                            </button>
+                                                            <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
+                                                                <DownloadIcon className="w-5 h-5" />
+                                                            </button>
+                                                            {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
+                                                                <button
+                                                                    onClick={() => openCancelModal(file)}
+                                                                    className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
+                                                                    title="توقف و حذف از صف"
+                                                                >
+                                                                    <StopIcon className="w-5 h-5" />
+                                                                </button>
+                                                            )}
+                                                            {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
+                                                                <button
+                                                                    onClick={() => openDeleteModal(file)}
+                                                                    className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
+                                                                    title="حذف آیتم"
+                                                                >
+                                                                    <TrashIcon className="w-5 h-5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ))
+                                        );
+                                        })
                                     )}
                                 </tbody>
                             </table>

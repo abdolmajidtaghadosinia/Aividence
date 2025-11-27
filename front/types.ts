@@ -20,6 +20,9 @@ export interface FileData {
   progressLabel?: string;
   duration?: number;
   uploader?: string;
+  uploadedAt?: string;
+  lastUpdatedLabel?: string;
+  summary?: string;
   originalText?: string;
   processedText?: string;
   editedText?: string;
