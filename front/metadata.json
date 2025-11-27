@@ -1,0 +1,5 @@
+{
+  "name": "Intelligent Document Assistant",
+  "description": "A dashboard for managing and processing uploaded files using AI. Users can view file status, details, and manage a dictionary of specialized terms. The application is in Persian (Farsi).",
+  "requestFramePermissions": []
+}

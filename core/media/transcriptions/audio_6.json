@@ -1,0 +1,25 @@
+{
+  "text": "蛎 CLT",
+  "segments": [
+    {
+      "id": 0,
+      "seek": 0,
+      "start": 0.0,
+      "end": 3.94,
+      "text": "蛎 CLT",
+      "tokens": [
+        50364,
+        26145,
+        236,
+        12855,
+        51,
+        50561
+      ],
+      "temperature": 1.0,
+      "avg_logprob": -4.797445569719587,
+      "compression_ratio": 0.4666666666666667,
+      "no_speech_prob": 0.3010881841182709
+    }
+  ],
+  "language": "fa"
+}

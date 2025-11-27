@@ -1,0 +1,146 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py makemigrations &&
+             python manage.py migrate --no-input &&
+             python manage.py collectstatic --noinput &&
+             python manage.py create_default_user &&
+             gunicorn --workers=2 core.wsgi:application --bind 0.0.0.0:8000"
+    env_file:
+      - ./core/secrets.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - media:/src/app/media
+      - staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - rayan_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/admin/login/ || curl -fsS http://localhost:8000/swagger/ || exit 1"]
+      interval: 10s
+      retries: 6
+      timeout: 5s
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=https://rayanclub360.ir
+    # served behind nginx; no public port expose needed
+    networks:
+      - rayan_network
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - staticfiles:/vol/web/static
+      - media:/vol/web/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - rayan_network
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: celery -A core worker --loglevel=info --concurrency=2
+    env_file:
+      - ./core/secrets.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - media:/src/app/media
+      - staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - rayan_network
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: celery -A core beat --loglevel=info
+    env_file:
+      - ./core/secrets.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - media:/src/app/media
+      - staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - rayan_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - rayan_network
+
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: postgres_db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - "5431:5432"
+    environment:
+      - POSTGRES_DB=AIDoc
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=*Art1376*
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d AIDoc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - rayan_network
+
+volumes:
+  media:
+  staticfiles:
+  postgres_data:
+
+networks:
+  rayan_network:
+    driver: bridge

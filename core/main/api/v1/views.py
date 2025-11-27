@@ -1,0 +1,40 @@
+import os
+from rest_framework import generics, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.core.files.storage import default_storage
+from django.conf import settings
+from files.models import Audio, Subset
+from .serializers import AudioListItemSerializer
+from django.shortcuts import get_object_or_404
+
+
+
+class AudioListView(generics.ListAPIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    serializer_class = AudioListItemSerializer
+
+    def get_queryset(self):
+        return Audio.objects.select_related('subset').order_by('-created_at')
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+
+        total = queryset.count()
+        status_counts = {
+            'AP': queryset.filter(status='AP').count(),
+            'P': queryset.filter(status='P').count(),
+            'PD': queryset.filter(status='PD').count(),
+            'A': queryset.filter(status='A').count(),
+            'E': queryset.filter(status='E').count(),
+            'R': queryset.filter(status='R').count(),
+        }
+
+        return Response({
+            'items': serializer.data,
+            'counts': status_counts,
+            'total': total,
+        })

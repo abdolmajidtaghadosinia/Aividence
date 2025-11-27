@@ -1,0 +1,152 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: >
+      sh -c "cp -a /tmp/initial_media/. /src/app/media/ &&
+             python manage.py makemigrations &&
+             python manage.py migrate --no-input &&
+             python manage.py create_default_user &&
+             python manage.py collectstatic --noinput &&
+             chown -R www-data:www-data /src/app/media/ /app/staticfiles/ &&
+             find /src/app/media/ -type d -exec chmod 755 {} + &&
+             find /src/app/media/ -type f -exec chmod 644 {} + &&
+             find /app/staticfiles/ -type d -exec chmod 755 {} + &&
+             find /app/staticfiles/ -type f -exec chmod 644 {} + &&
+             gunicorn --log-level debug --workers=2 rayan.wsgi:application --bind 0.0.0.0:8000""
+    env_file:
+      - ./secrets.env
+    environment: # این بخش جدید یا ویرایش شده است
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    # پورت 8000 را فقط داخلی نگه می‌داریم، Nginx به آن دسترسی خواهد داشت
+    # ports:
+    #   - '8000:8000'
+    volumes:
+      # - media:/src/app/media
+      - ./media:/app/media
+      - staticfiles:/app/staticfiles
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - network
+
+  nginx: # سرویس جدید Nginx
+    container_name: nginx
+    build:
+      context: ./nginx # به دایرکتوری که Dockerfile و nginx.conf در آن هستند اشاره می‌کند
+      dockerfile: Dockerfile
+    ports:
+      - '80:80' # پورت 80 هاست را به پورت 80 کانتینر Nginx مپ می‌کنیم
+    volumes:
+      - staticfiles:/vol/web/static # Volume مربوط به staticfiles را به Nginx مپ می‌کنیم
+      - media:/vol/web/media       # Volume مربوط به media را به Nginx مپ می‌کنیم
+    depends_on:
+      backend:
+        condition: service_started # Nginx بعد از اینکه backend شروع شد، اجرا شود
+    networks:
+      - network
+
+  celery_worker:
+    container_name: celery_worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core worker --loglevel=info --concurrency=2
+    env_file:
+      - ./secrets.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - media:/src/app/media
+      - staticfiles:/app/staticfiles
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - network
+
+  celery_beat:
+    container_name: celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core beat --loglevel=info
+    env_file:
+      - ./secrets.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - media:/src/app/media
+      - staticfiles:/app/staticfiles
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    networks:
+      - network
+
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: p_db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      # - ./backend/init_procedures.sql:/docker-entrypoint-initdb.d/init_procedures.sql
+    ports:
+      - '5431:5432'
+    env_file:
+      - ./secrets.env
+    environment:
+      - POSTGRES_DB=AIDoc
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=*Art1376*
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - network
+
+
+volumes:
+  media:
+  staticfiles:
+  postgres_data:
+  
+networks:
+  network:
+    driver: bridge
+
+# docker-compose.yml
+# version: '3.8'
+
+# services:
+#   redis:
+#     image: redis:7-alpine
+#     container_name: redis_server
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/data
+#     command: redis-server --bind 0.0.0.0 --protected-mode no
+
+# volumes:
+#   redis_data:  # این خط رو اضافه کن

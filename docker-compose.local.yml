@@ -1,0 +1,152 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: backend_local
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: >
+      sh -c "python manage.py migrate --no-input &&
+             python manage.py collectstatic --noinput &&
+             python manage.py create_default_user &&
+             gunicorn --workers=2 core.wsgi:application --bind 0.0.0.0:8000"
+    env_file:
+      - ./core/secrets.local.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./core/media:/src/app/media
+      - ./core/staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - local_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin/login/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  frontend:
+    container_name: frontend_local
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - local_network
+
+  nginx:
+    container_name: nginx_local
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./core/staticfiles:/vol/web/static
+      - ./core/media:/vol/web/media
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - local_network
+
+  celery_worker:
+    container_name: celery_worker_local
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: celery -A core worker --loglevel=info --concurrency=2
+    env_file:
+      - ./core/secrets.local.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - ./core/media:/src/app/media
+      - ./core/staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - local_network
+
+  celery_beat:
+    container_name: celery_beat_local
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    command: celery -A core beat --loglevel=info
+    env_file:
+      - ./core/secrets.local.env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    restart: unless-stopped
+    volumes:
+      - ./core/media:/src/app/media
+      - ./core/staticfiles:/src/app/staticfiles
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - local_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis_local
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - local_network
+
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: postgres_db_local
+    restart: unless-stopped
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data/
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=AIDoc
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=local_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d AIDoc"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - local_network
+
+volumes:
+  postgres_data_local:
+
+networks:
+  local_network:
+    driver: bridge

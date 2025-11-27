@@ -1,0 +1,24 @@
+# Build stage
+FROM node:20-alpine AS build
+WORKDIR /app
+# فقط فایل‌های ضروری نصب
+COPY package*.json ./
+# اگر yarn.lock دارید:
+# COPY yarn.lock ./
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm config set fund false && npm config set audit false && \
+    npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+# Workaround for environments with noexec/permission issues: install vite globally
+RUN npm install -g vite@^6
+# بقیه کد فرانت
+COPY . ./
+RUN vite build
+
+# Serve stage
+FROM nginx:alpine
+WORKDIR /usr/share/nginx/html
+COPY --from=build /app/dist ./
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx","-g","daemon off;"]
