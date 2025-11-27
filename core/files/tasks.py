@@ -246,21 +246,30 @@ def save_text_to_database(audio_instance, text, full_text):
 
 
 @shared_task(bind=True)
-def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'):  
+def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'):
     logger.info(f"🚀 شروع پردازش فایل صوتی: {audio_name} (ID: {audio_id})")
-    
+
     try:
         # تغییر وضعیت به در حال پردازش
         update_audio_status(audio_id, 'P')
         logger.info(f"📝 وضعیت فایل {audio_id} به 'در حال پردازش' تغییر یافت")
-        
+        try:
+            self.update_state(state='PROGRESS', meta={'progress': 5, 'status': 'شروع پردازش فایل'})
+        except Exception:
+            logger.debug("⚠️ به‌روزرسانی اولیه وضعیت Celery ناموفق بود")
+
         # مرحله 1: آپلود فایل
         logger.info("📤 مرحله 1: آپلود فایل به سرویس iotype")
         file_token = uplouder_audio(audio_name, audio_path)
-        
+
         if isinstance(file_token, str):
             logger.info(f"✅ آپلود موفق - FileToken: {file_token}")
-            
+
+            try:
+                self.update_state(state='PROGRESS', meta={'progress': 20, 'status': 'آپلود فایل انجام شد'})
+            except Exception:
+                logger.debug("⚠️ ثبت پیشرفت آپلود در Celery ناموفق بود")
+
             # ذخیره file_token در دیتابیس
             audio_instance = Audio.objects.get(id=audio_id)
             audio_instance.file_token = file_token
@@ -270,14 +279,19 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
             # مرحله 2: شروع تبدیل
             logger.info("🔄 مرحله 2: شروع تبدیل گفتار به متن")
             convert_result = start_convert_audio_to_text(file_token)
-            
+
             if convert_result == "ConvertStarted":
                 logger.info("✅ تبدیل با موفقیت شروع شد")
-                
+
+                try:
+                    self.update_state(state='PROGRESS', meta={'progress': 30, 'status': 'شروع تبدیل فایل'})
+                except Exception:
+                    logger.debug("⚠️ ثبت پیشرفت شروع تبدیل در Celery ناموفق بود")
+
                 # فرصت به سرویس برای شروع پردازش
                 logger.info("⏳ انتظار 10 ثانیه برای شروع پردازش...")
                 time.sleep(10)
-                
+
                 # مرحله 3: بررسی وضعیت تبدیل
                 logger.info("🔍 مرحله 3: بررسی وضعیت تبدیل")
                 start_time = time.time()
@@ -297,22 +311,46 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                     if isinstance(text, dict):
                         status_flag = text.get("status")
                         progress = text.get("progress", "نامشخص")
-                        
+
                         if status_flag == 'E':
                             logger.error(f"❌ خطا در تبدیل: {text}")
                             update_audio_status(audio_id, 'E')
+                            try:
+                                self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(text)})
+                            except Exception:
+                                logger.debug("⚠️ ثبت خطا در وضعیت Celery ناموفق بود")
                             return text
-                            
+
                         # اگر همچنان در حال پردازش است، منتظر بمانیم
                         if status_flag == 'Pr':
                             logger.info(f"⏳ در حال پردازش - پیشرفت: {progress}")
-                            
+
+                            try:
+                                numeric_progress = float(str(progress).replace('%', ''))
+                            except Exception:
+                                numeric_progress = 0
+
+                            try:
+                                self.update_state(
+                                    state='PROGRESS',
+                                    meta={
+                                        'progress': max(0, min(100, numeric_progress)),
+                                        'status': f"در حال تبدیل ({progress})"
+                                    }
+                                )
+                            except Exception:
+                                logger.debug("⚠️ ثبت درصد پیشرفت در Celery ناموفق بود")
+
                             # کنترل تایم‌اوت کلی
                             if time.time() - start_time > max_wait_seconds:
                                 logger.error(f"⏰ تایم‌اوت - بیش از {max_wait_seconds/60:.0f} دقیقه انتظار")
                                 update_audio_status(audio_id, 'E')
+                                try:
+                                    self.update_state(state='FAILURE', meta={'progress': numeric_progress, 'status': 'تایم‌اوت در پردازش'})
+                                except Exception:
+                                    logger.debug("⚠️ ثبت تایم‌اوت در Celery ناموفق بود")
                                 return {"error": "Timeout waiting for conversion", "status": 'E'}
-                            
+
                             logger.info("⏳ انتظار 5 ثانیه...")
                             time.sleep(5)
                             continue
@@ -344,11 +382,20 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                 logger.info("💾 مرحله 5: ذخیره در دیتابیس")
                 save_text_to_database(audio_instance, text, full_text)
 
+                try:
+                    self.update_state(state='SUCCESS', meta={'progress': 100, 'status': 'پردازش تکمیل شد'})
+                except Exception:
+                    logger.debug("⚠️ ثبت اتمام پردازش در Celery ناموفق بود")
+
                 logger.info(f"🎉 پردازش فایل {audio_id} با موفقیت تکمیل شد")
                 return {"success": True, "audio_id": audio_id, "status": 'PD'}
             else:
                 logger.error(f"❌ خطا در شروع تبدیل: {convert_result}")
                 update_audio_status(audio_id, 'E')
+                try:
+                    self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در شروع تبدیل'})
+                except Exception:
+                    logger.debug("⚠️ ثبت خطای شروع تبدیل در Celery ناموفق بود")
                 return {"error": "خطا در شروع تبدیل گفتار به متن", "status": 'E'}
         else:
             logger.error(f"❌ خطا در آپلود فایل: {file_token}")
@@ -362,14 +409,26 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                 if error_code == "NoEnoughCredit" or error_status == 'AP':
                     logger.info("↩️ برگرداندن وضعیت فایل به 'در انتظار پردازش' به دلیل کمبود اعتبار سرویس")
                     update_audio_status(audio_id, 'AP')
+                    try:
+                        self.update_state(state='PROGRESS', meta={'progress': 0, 'status': 'کمبود اعتبار سرویس پردازش'})
+                    except Exception:
+                        logger.debug("⚠️ ثبت پیام کمبود اعتبار در Celery ناموفق بود")
                     return {"error": "اعتبار سرویس پردازش کافی نیست. لطفاً پس از شارژ مجدد دوباره تلاش کنید.", "status": 'AP'}
 
             update_audio_status(audio_id, 'E')
+            try:
+                self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در آپلود فایل'})
+            except Exception:
+                logger.debug("⚠️ ثبت خطای آپلود در Celery ناموفق بود")
             return {"error": "خطا در آپلود فایل", "status": 'E'}
-            
+
     except Exception as e:
         logger.error(f"❌ خطای کلی در پردازش: {str(e)}")
         update_audio_status(audio_id, 'E')
+        try:
+            self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(e)})
+        except Exception:
+            logger.debug("⚠️ ثبت خطای کلی در Celery ناموفق بود")
         return {"error": str(e), "status": 'E'}
 
     return {"success": True, "audio_id": audio_id, "status": 'P'}
