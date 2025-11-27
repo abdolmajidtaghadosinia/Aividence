@@ -74,6 +74,72 @@
         background-image: radial-gradient(rgba(99,102,241,0.12) 1px, transparent 0);
         background-size: 24px 24px;
       }
+
+      /* ===== Motion System ===== */
+      @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(16px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes fadeInDown {
+        0% { opacity: 0; transform: translateY(-12px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes softPop {
+        0% { opacity: 0; transform: scale(0.95); }
+        60% { opacity: 1; transform: scale(1.02); }
+        100% { transform: scale(1); }
+      }
+
+      @keyframes floatPulse {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .animate-page {
+        animation: fadeInUp 0.6s ease both;
+      }
+
+      .animate-card {
+        animation: fadeInUp 0.75s ease both;
+      }
+
+      .animate-soft-pop {
+        animation: softPop 0.45s ease both;
+      }
+
+      .animate-fade-in-down {
+        animation: fadeInDown 0.4s ease both;
+      }
+
+      .animate-breath {
+        animation: floatPulse 6s ease-in-out infinite;
+      }
+
+      .hover-lift {
+        transition: transform 250ms ease, box-shadow 250ms ease;
+      }
+
+      .hover-lift:hover {
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 25px 60px rgba(79, 70, 229, 0.16);
+      }
+
+      .pulse-chip {
+        background: linear-gradient(120deg, rgba(99,102,241,0.12), rgba(14,165,233,0.12), rgba(249,115,22,0.12));
+        background-size: 200% 200%;
+        animation: shimmer 8s linear infinite;
+      }
+
+      .table-row-animate {
+        animation: fadeInUp 0.45s ease both;
+      }
     </style>
   <script type="importmap">
 {

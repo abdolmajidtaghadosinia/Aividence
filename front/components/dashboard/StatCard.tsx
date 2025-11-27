@@ -28,7 +28,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, colorTheme, status, o
 
     return (
         <div
-            className={`relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br ${theme.bg} shadow-lg shadow-slate-200/60 transition-all duration-200 cursor-pointer border border-white/70 ${isActive ? 'ring-2 ring-offset-2 ring-indigo-400' : ''}`}
+            className={`relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br ${theme.bg} shadow-lg shadow-slate-200/60 transition-all duration-200 cursor-pointer border border-white/70 ${isActive ? 'ring-2 ring-offset-2 ring-indigo-400' : ''} animate-card hover-lift`}
             onClick={() => onFilterClick(status)}
             role="button"
             tabIndex={0}

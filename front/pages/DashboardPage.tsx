@@ -202,7 +202,7 @@ const DashboardPage: React.FC = () => {
 
             <div className="grid xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
                             <button
@@ -241,8 +241,8 @@ const DashboardPage: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredFiles.map((file) => (
-                                            <tr key={file.id} className="bg-white border-b hover:bg-gray-50">
+                                        filteredFiles.map((file, index) => (
+                                            <tr key={file.id} className="bg-white border-b hover:bg-gray-50 table-row-animate" style={{ animationDelay: `${index * 45}ms` }}>
                                                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[150px] truncate" title={file.name}>
                                                     {file.name}
                                                 </td>
@@ -378,11 +378,11 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card" style={{ animationDelay: '120ms' }}>
                         <StatusChart stats={stats} />
                     </div>
 
-                    <div className="soft-card rounded-3xl p-6">
+                    <div className="soft-card rounded-3xl p-6 animate-card" style={{ animationDelay: '180ms' }}>
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <p className="text-sm text-slate-500">زیرمجموعه‌ها</p>
@@ -407,7 +407,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card" style={{ animationDelay: '240ms' }}>
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <p className="text-sm text-slate-500">ریتم آپلود</p>

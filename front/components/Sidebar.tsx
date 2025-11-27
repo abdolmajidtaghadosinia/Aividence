@@ -71,8 +71,8 @@ const Sidebar: React.FC = () => {
     );
 
     return (
-        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 sticky top-6 self-start max-h-[calc(100vh-32px)]">
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-3">
+        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 sticky top-6 self-start max-h-[calc(100vh-32px)] animate-fade-in-down">
+            <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-3 hover-lift">
                 <div className="w-12 h-12 rounded-2xl bg-white shadow flex items-center justify-center">
                     <LogoIcon className="w-7 h-7 text-indigo-600" />
                 </div>
@@ -86,8 +86,8 @@ const Sidebar: React.FC = () => {
             <nav className="flex-grow py-6">
                 <p className="text-xs text-slate-400 font-semibold px-2 mb-3">بخش ها</p>
                 <ul className="space-y-3">
-                    {menuItems.map((item) => (
-                        <li key={item.label}>
+                    {menuItems.map((item, index) => (
+                        <li key={item.label} style={{ animationDelay: `${index * 60}ms` }} className="animate-card">
                             {item.disabled ? (
                                 <div
                                     aria-disabled
