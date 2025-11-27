@@ -2,7 +2,7 @@
 import React, { useState, createContext, useContext, useMemo, ReactNode, useCallback, useEffect } from 'react';
 import { FileData, FileStatus, AudioFileItem, DashboardResponse } from '../types';
 import { MOCK_FILES } from '../constants';
-import { getDashboardData, checkFileStatus } from '../api/api';
+import { getDashboardData, checkFileStatus as fetchFileStatus } from '../api/api';
 
 interface FileContextType {
   files: FileData[];
@@ -65,6 +65,28 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const requestNotificationPermission = useCallback(async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+
+    if (Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (err) {
+        console.warn('Notification permission request failed:', err);
+      }
+    }
+  }, []);
+
+  const notifyStatusChange = useCallback((fileName: string, statusLabel: string) => {
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+
+    if (Notification.permission === 'granted') {
+      new Notification('وضعیت پردازش به‌روزرسانی شد', {
+        body: `${fileName}: ${statusLabel}`,
+      });
+    }
+  }, []);
+
   const getFileById = useCallback((id: string) => {
     return files.find(f => f.id === id);
   }, [files]);
@@ -79,12 +101,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addFile = useCallback((file: FileData) => {
     setFiles(prevFiles => [file, ...prevFiles]);
-
-    // Simulate backend processing time
-    setTimeout(() => {
-      updateFile(file.id, { status: FileStatus.Pending });
-    }, 5000); // 5-second delay
-  }, [updateFile]);
+  }, []);
 
   const refreshFiles = useCallback(async () => {
     try {
@@ -105,7 +122,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const checkFileStatus = useCallback(async (fileId: string) => {
     try {
-      const response = await checkFileStatus(parseInt(fileId));
+      const response = await fetchFileStatus(parseInt(fileId));
       if (response.success) {
         // Map API status to FileStatus enum
         const statusMap: { [key: string]: FileStatus } = {
@@ -116,7 +133,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           'E': FileStatus.Rejected,
           'R': FileStatus.Rejected,
         };
-        
+
         const newStatus = statusMap[response.current_status] || FileStatus.Pending;
         updateFile(fileId, { status: newStatus });
       }
@@ -125,10 +142,51 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [updateFile]);
 
+  const pollProcessingStatuses = useCallback(async (processingFiles: FileData[]) => {
+    const statusMap: { [key: string]: FileStatus } = {
+      'AP': FileStatus.Pending,
+      'P': FileStatus.Processing,
+      'PD': FileStatus.Processed,
+      'A': FileStatus.Approved,
+      'E': FileStatus.Rejected,
+      'R': FileStatus.Rejected,
+    };
+
+    for (const file of processingFiles) {
+      try {
+        const response = await fetchFileStatus(parseInt(file.id));
+        if (!response.success) continue;
+
+        const newStatus = statusMap[response.current_status] || FileStatus.Pending;
+        if (newStatus !== file.status) {
+          updateFile(file.id, { status: newStatus });
+          notifyStatusChange(file.name, newStatus || response.status_display || 'به‌روزرسانی شد');
+        }
+      } catch (err) {
+        console.error('Error polling file status:', err);
+      }
+    }
+  }, [notifyStatusChange, updateFile]);
+
   // Load files on mount
   useEffect(() => {
     refreshFiles();
-  }, [refreshFiles]);
+    requestNotificationPermission();
+  }, [refreshFiles, requestNotificationPermission]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const processingFiles = files.filter(
+        (file) => file.status === FileStatus.Processing || file.status === FileStatus.Pending
+      );
+
+      if (processingFiles.length > 0) {
+        pollProcessingStatuses(processingFiles);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [files, pollProcessingStatuses]);
   
   const value = useMemo(() => ({ 
     files, 

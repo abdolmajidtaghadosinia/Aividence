@@ -105,11 +105,17 @@ const DictionaryPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
                 <div>
                     <p className="text-sm text-slate-500">کتابخانه عبارات</p>
                     <h2 className="text-2xl font-black text-slate-900">اصطلاحات کلیدی سازمان را مدیریت کنید</h2>
                     <p className="text-slate-500 mt-2">جستجو، فیلتر و افزودن عبارات جدید با یک تجربه بصری تازه.</p>
+                    <div className="card-divider my-3" />
+                    <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-700 font-semibold">همگام با تیم</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-700 font-semibold">به روز</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-700 font-semibold">دسترسی سریع</span>
+                    </div>
                 </div>
                 <button
                     onClick={() => setAddFormVisible(true)}

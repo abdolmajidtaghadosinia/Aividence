@@ -148,7 +148,7 @@ const DashboardPage: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 soft-card rounded-3xl p-6 flex flex-col gap-4">
+                <div className="lg:col-span-2 soft-card rounded-3xl p-6 flex flex-col gap-4 shadow-lg">
                     <div className="flex items-start justify-between gap-3">
                         <div>
                             <p className="text-sm text-slate-500">مرور کلی امروز</p>
@@ -163,15 +163,19 @@ const DashboardPage: React.FC = () => {
                             <span>ایجاد بارگذاری جدید</span>
                         </button>
                     </div>
-                    <div className="flex flex-wrap gap-3">
-                        <div className="px-4 py-2 rounded-2xl bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-100">
-                            {toPersianDigits(stats.processing)} فایل در حال پردازش
+                    <div className="card-divider" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-semibold">
+                        <div className="frosted-chip px-4 py-3 rounded-2xl text-indigo-700 flex items-center justify-between">
+                            <span>در حال پردازش</span>
+                            <span className="text-base">{toPersianDigits(stats.processing)}</span>
                         </div>
-                        <div className="px-4 py-2 rounded-2xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
-                            {toPersianDigits(stats.approved)} تایید شده نهایی
+                        <div className="frosted-chip px-4 py-3 rounded-2xl text-emerald-700 flex items-center justify-between">
+                            <span>تایید شده نهایی</span>
+                            <span className="text-base">{toPersianDigits(stats.approved)}</span>
                         </div>
-                        <div className="px-4 py-2 rounded-2xl bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-100">
-                            {toPersianDigits(stats.pending)} در انتظار پردازش
+                        <div className="frosted-chip px-4 py-3 rounded-2xl text-amber-700 flex items-center justify-between">
+                            <span>در انتظار</span>
+                            <span className="text-base">{toPersianDigits(stats.pending)}</span>
                         </div>
                     </div>
                 </div>

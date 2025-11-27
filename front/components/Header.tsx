@@ -28,7 +28,7 @@ const Header: React.FC = () => {
 
     const [isProfileOpen, setProfileOpen] = useState(false);
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
-    
+
     const profileRef = useRef<HTMLDivElement>(null);
     useClickOutside(profileRef, () => setProfileOpen(false));
 
@@ -82,7 +82,7 @@ const Header: React.FC = () => {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative flex-1 min-w-[220px]">
+                        <div className="relative flex-1 min-w-[240px]">
                             <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                             <input
                                 type="text"
@@ -102,6 +102,25 @@ const Header: React.FC = () => {
                             <UploadIcon className="w-5 h-5" />
                             <span>بارگذاری سریع</span>
                         </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-slate-600">
+                        <div className="frosted-chip px-3 py-2 rounded-2xl flex items-center justify-between">
+                            <span>تکمیل امروز</span>
+                            <span className="text-indigo-700 font-bold">{approvedCount}</span>
+                        </div>
+                        <div className="frosted-chip px-3 py-2 rounded-2xl flex items-center justify-between">
+                            <span>در صف</span>
+                            <span className="text-amber-600 font-bold">{processingCount}</span>
+                        </div>
+                        <div className="frosted-chip px-3 py-2 rounded-2xl flex items-center justify-between">
+                            <span>کل فایل‌ها</span>
+                            <span className="text-slate-800 font-bold">{totalFiles}</span>
+                        </div>
+                        <div className="frosted-chip px-3 py-2 rounded-2xl hidden md:flex items-center justify-between">
+                            <span>کاربر فعال</span>
+                            <span className="text-emerald-600 font-bold">{user?.name}</span>
+                        </div>
                     </div>
                 </div>
             </header>

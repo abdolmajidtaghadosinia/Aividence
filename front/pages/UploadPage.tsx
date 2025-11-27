@@ -32,11 +32,17 @@ const UploadPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="soft-card rounded-3xl p-6 flex items-center justify-between gap-4">
+            <div className="soft-card rounded-3xl p-6 flex items-center justify-between gap-4 shadow-lg">
                 <div>
                     <p className="text-sm text-slate-500">آپلود جدید</p>
                     <h2 className="text-2xl font-black text-slate-900">پردازش هوشمند را همین حالا آغاز کنید</h2>
                     <p className="text-slate-500 mt-2">فایل صوتی خود را بارگذاری کنید تا در صف پردازش قرار گیرد.</p>
+                    <div className="card-divider my-3" />
+                    <div className="flex flex-wrap gap-2 text-xs">
+                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-700 font-semibold">کیفیت بالا</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-700 font-semibold">ضد خطا</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-700 font-semibold">ردیابی وضعیت</span>
+                    </div>
                 </div>
                 <div className="hidden md:block px-4 py-3 rounded-2xl bg-indigo-50 text-indigo-700 font-semibold border border-indigo-100">
                     زمان میانگین پردازش: ۸ دقیقه
