@@ -26,6 +26,13 @@ except Exception:  # pragma: no cover
     pdfmetrics = None
     TTFont = None
 
+try:
+    import arabic_reshaper
+    from bidi.algorithm import get_display
+except Exception:  # pragma: no cover
+    arabic_reshaper = None
+    get_display = None
+
 
 
 class KeywordModelViewSet(ModelViewSet):
@@ -106,19 +113,36 @@ class ExportCustomContentZipView(APIView):
                     except Exception:
                         continue
 
+        def _prepare_rtl_text(text: str) -> str:
+            """Return a display-ready RTL string when bidi helpers are available."""
+
+            if not text:
+                return ""
+
+            if arabic_reshaper and get_display:
+                try:
+                    reshaped = arabic_reshaper.reshape(text)
+                    return get_display(reshaped)
+                except Exception:
+                    pass
+
+            return text
+
         def _wrap_line(text, max_width, active_font):
             """Wrap a single line to the maximum width based on the active font metrics."""
 
             if not text:
                 return [""]
 
+            prepared_text = _prepare_rtl_text(text)
+
             # Fallback to a naive character-based wrap when metrics are unavailable.
             if pdfmetrics is None or active_font is None:
                 import textwrap
 
-                return textwrap.wrap(text, width=80) or [""]
+                return textwrap.wrap(prepared_text, width=80) or [""]
 
-            words = text.split()
+            words = prepared_text.split()
             wrapped, current = [], ""
             for word in words:
                 candidate = word if not current else f"{current} {word}"
