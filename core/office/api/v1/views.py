@@ -96,6 +96,8 @@ class ExportCustomContentZipView(APIView):
         pdf_buf = io.BytesIO()
         if canvas is None:
             return Response({'detail': 'reportlab نصب نیست.'}, status=500)
+        if arabic_reshaper is None or get_display is None:
+            return Response({'detail': 'کتابخانه‌های arabic-reshaper و python-bidi برای ساخت PDF فارسی الزامی هستند.'}, status=500)
 
         # Register a Persian-friendly font when available for proper glyph rendering.
         font_name = None
@@ -177,7 +179,7 @@ class ExportCustomContentZipView(APIView):
                     c.showPage()
                     c.setFont(active_font, 12)
                     y = start_y
-                c.drawRightString(text_x, y, line)
+                c.drawRightString(text_x, y, _prepare_rtl_text(line))
                 y -= line_height
             # Extra spacing between paragraphs.
             y -= 4
