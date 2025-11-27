@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
-import { SearchIcon, EyeIcon, DownloadIcon, PlusIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
+import { SearchIcon, EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
 import { exportCustomContentZip, getAudioTextByUuid } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
@@ -149,19 +149,28 @@ const DashboardPage: React.FC = () => {
         <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div className="lg:col-span-2 soft-card rounded-3xl p-6 flex flex-col gap-4 shadow-lg">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
+                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                        <div className="space-y-2">
                             <p className="text-sm text-slate-500">مرور کلی امروز</p>
                             <h2 className="text-2xl font-black text-slate-900">همه چیز برای مدیریت فایل‌های صوتی آماده است</h2>
-                            <p className="text-slate-500 mt-2">روند آپلود و تایید را در یک نما ببینید و سریعا اقدام کنید.</p>
+                            <p className="text-slate-500">روند آپلود و تایید را در یک نما ببینید و سریعا اقدام کنید.</p>
                         </div>
-                        <button
-                            onClick={() => navigate('/upload')}
-                            className="pill-button px-4 py-3 rounded-2xl flex items-center gap-2 text-sm font-bold transition hover:shadow-xl"
-                        >
-                            <PlusIcon className="w-5 h-5" />
-                            <span>ایجاد بارگذاری جدید</span>
-                        </button>
+                        <div className="w-full lg:w-80">
+                            <label className="text-xs text-slate-500 font-semibold block mb-1">
+                                جستجو در فایل‌های پردازش‌شده
+                            </label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="نام فایل را تایپ کنید..."
+                                    className="w-full pl-10 pr-4 py-2.5 border border-white/70 rounded-2xl bg-white/80 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-300 shadow-sm"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            </div>
+                            <p className="text-[11px] text-slate-500 mt-1">با تایپ نام، فایل‌های پردازش‌شده زیر فیلتر می‌شوند.</p>
+                        </div>
                     </div>
                     <div className="card-divider" />
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-semibold">
@@ -233,25 +242,13 @@ const DashboardPage: React.FC = () => {
                     <div className="glass-panel rounded-3xl p-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
-                            <div className="flex flex-wrap gap-2 items-center">
-                                <button
-                                    onClick={refreshFiles}
-                                    className="px-3 py-2 text-sm pill-button rounded-xl hover:shadow-xl transition"
-                                    title="بروزرسانی"
-                                >
-                                    🔄
-                                </button>
-                                <div className="relative w-full md:w-64">
-                                    <input
-                                        type="text"
-                                        placeholder="جستجوی فایل صوتی..."
-                                        className="w-full pl-10 pr-4 py-2 border border-white/70 rounded-xl bg-white/80 focus:ring-indigo-500 focus:border-indigo-400"
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                    />
-                                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                </div>
-                            </div>
+                            <button
+                                onClick={refreshFiles}
+                                className="px-3 py-2 text-sm pill-button rounded-xl hover:shadow-xl transition"
+                                title="بروزرسانی"
+                            >
+                                🔄
+                            </button>
                         </div>
 
                         <div className="overflow-x-auto">
