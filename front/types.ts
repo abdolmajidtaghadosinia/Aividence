@@ -14,6 +14,9 @@ export interface FileData {
   type: string;
   subCollection: string;
   status: FileStatus;
+  task_id?: string | null;
+  progress?: number;
+  progressLabel?: string;
   duration?: number;
   uploader?: string;
   originalText?: string;
@@ -48,6 +51,7 @@ export interface AudioFileItem {
   status_display: string;
   subset_title: string;
   upload_uuid: string;
+  task_id?: string | null;
 }
 
 export interface DashboardResponse {

@@ -12,7 +12,7 @@ class AudioListItemSerializer(serializers.ModelSerializer):
         model = Audio
         fields = [
             'id', 'file_name', 'uploaded_at', 'file_type', 'file_type_display',
-            'status', 'status_display', 'subset_title', 'upload_uuid'
+            'status', 'status_display', 'subset_title', 'upload_uuid', 'task_id'
         ]
         read_only_fields = fields
 

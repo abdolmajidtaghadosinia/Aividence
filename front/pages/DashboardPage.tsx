@@ -288,7 +288,29 @@ const DashboardPage: React.FC = () => {
                                                 </td>
                                                 <td className="px-6 py-4">{file.uploadDate}</td>
                                                 <td className="px-6 py-4 hidden md:table-cell">{file.type}</td>
-                                                <td className="px-6 py-4">{renderStatusBadge(file.status)}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="space-y-2">
+                                                        {renderStatusBadge(file.status)}
+                                                        {file.status === FileStatus.Processing && (
+                                                            <div className="space-y-1">
+                                                                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                                    <span className="truncate max-w-[180px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
+                                                                        {file.progressLabel || 'در حال ترنسکرایب...'}
+                                                                    </span>
+                                                                    <span className="font-bold text-slate-800">
+                                                                        {toPersianDigits(Math.round(file.progress ?? 0))}%
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-full h-2.5 bg-indigo-50 rounded-full overflow-hidden border border-indigo-100/60 shadow-inner">
+                                                                    <div
+                                                                        className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700"
+                                                                        style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}
+                                                                    ></div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4 flex items-center gap-x-2">
                                                     <button
                                                         onClick={() => handleViewClick(file)}
@@ -324,12 +346,27 @@ const DashboardPage: React.FC = () => {
                                     <li className="text-sm text-slate-500">صف پردازش خالی است.</li>
                                 )}
                                 {processingQueue.map((file) => (
-                                    <li key={file.id} className="flex items-center justify-between bg-white/80 border border-white/70 rounded-2xl px-4 py-3 shadow-sm">
-                                        <div>
-                                            <p className="font-semibold text-slate-800">{file.name}</p>
-                                            <p className="text-xs text-slate-500">{file.subCollection}</p>
+                                    <li key={file.id} className="flex flex-col gap-2 bg-white/80 border border-white/70 rounded-2xl px-4 py-3 shadow-sm">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="min-w-0">
+                                                <p className="font-semibold text-slate-800 truncate" title={file.name}>{file.name}</p>
+                                                <p className="text-xs text-slate-500">{file.subCollection}</p>
+                                            </div>
+                                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">{file.status === FileStatus.Processing ? 'در حال پردازش' : 'در انتظار'}</span>
                                         </div>
-                                        <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-100">{file.status === FileStatus.Processing ? 'در حال پردازش' : 'در انتظار'}</span>
+                                        {file.status === FileStatus.Processing && (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                    <span className="truncate max-w-[150px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
+                                                        {file.progressLabel || 'در حال ترنسکرایب...'}
+                                                    </span>
+                                                    <span className="font-bold text-slate-800">{toPersianDigits(Math.round(file.progress ?? 0))}%</span>
+                                                </div>
+                                                <div className="w-full h-2 rounded-full bg-indigo-50 overflow-hidden border border-indigo-100/60">
+                                                    <div className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700" style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}></div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </li>
                                 ))}
                             </ul>

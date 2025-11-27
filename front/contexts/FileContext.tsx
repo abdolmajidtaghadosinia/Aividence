@@ -2,7 +2,7 @@
 import React, { useState, createContext, useContext, useMemo, ReactNode, useCallback, useEffect, useRef } from 'react';
 import { FileData, FileStatus, AudioFileItem, DashboardResponse } from '../types';
 import { MOCK_FILES } from '../constants';
-import { getDashboardData, checkFileStatus as fetchFileStatus } from '../api/api';
+import { getDashboardData, checkFileStatus as fetchFileStatus, getTaskProgress } from '../api/api';
 
 interface FileContextType {
   files: FileData[];
@@ -56,6 +56,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     type: apiFile.file_type_display,
     subCollection: apiFile.subset_title,
     status: statusMap[apiFile.status] || FileStatus.Pending,
+    task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
   } as FileData;
 };
@@ -114,8 +115,30 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response: DashboardResponse = await getDashboardData();
       const convertedFiles = response.items.map(convertApiFileToFileData);
 
+      const processingProgress = await Promise.all(
+        convertedFiles.map(async (file) => {
+          if (file.status !== FileStatus.Processing || !file.task_id) return file;
+
+          try {
+            const taskProgress = await getTaskProgress(file.task_id);
+            const numericProgress = typeof taskProgress.progress === 'number'
+              ? taskProgress.progress
+              : parseFloat(String(taskProgress.progress).replace('%', ''));
+
+            return {
+              ...file,
+              progress: Number.isFinite(numericProgress) ? numericProgress : 0,
+              progressLabel: taskProgress.status,
+            } as FileData;
+          } catch (progressError) {
+            console.warn('Unable to fetch task progress', progressError);
+            return file;
+          }
+        })
+      );
+
       if (notifyChanges) {
-        convertedFiles.forEach((file) => {
+        processingProgress.forEach((file) => {
           const previousStatus = previousStatusesRef.current[file.id];
           if (previousStatus && previousStatus !== file.status) {
             const statusLabel = file.status || file.subCollection || 'به‌روزرسانی شد';
@@ -124,12 +147,12 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       }
 
-      previousStatusesRef.current = convertedFiles.reduce<Record<string, FileStatus>>((acc, file) => {
+      previousStatusesRef.current = processingProgress.reduce<Record<string, FileStatus>>((acc, file) => {
         acc[file.id] = file.status;
         return acc;
       }, {});
 
-      setFiles(convertedFiles);
+      setFiles(processingProgress);
       hasInitializedRef.current = true;
     } catch (err: any) {
       console.error('Error fetching files:', err);
