@@ -1,20 +1,24 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
-import { SearchIcon, EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
+import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon } from '../components/Icons';
 import { exportCustomContentZip, getAudioTextByUuid } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
 
+interface LayoutContext {
+    headerSearchTerm: string;
+}
+
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
     const { files, loading, error, refreshFiles } = useFiles();
-    const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
+    const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
         setStatusFilter(status);
@@ -23,7 +27,7 @@ const DashboardPage: React.FC = () => {
     const filteredFiles = useMemo(() => {
         return files
             .filter(file => {
-                const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesSearch = file.name.toLowerCase().includes(headerSearchTerm.toLowerCase());
                 const matchesStatus = statusFilter === 'all' || file.status === statusFilter;
                 return matchesSearch && matchesStatus;
             })
@@ -32,7 +36,7 @@ const DashboardPage: React.FC = () => {
                 const dateB = new Date(b.uploadDate.replace(/\//g, '-')).getTime();
                 return dateB - dateA;
             });
-    }, [files, searchTerm, statusFilter]);
+    }, [files, headerSearchTerm, statusFilter]);
 
     const stats = useMemo(() => ({
         total: files.length,
@@ -147,75 +151,6 @@ const DashboardPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div className="lg:col-span-2 soft-card rounded-3xl p-6 flex flex-col gap-4 shadow-lg">
-                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                        <div className="space-y-2">
-                            <p className="text-sm text-slate-500">مرور کلی امروز</p>
-                            <h2 className="text-2xl font-black text-slate-900">همه چیز برای مدیریت فایل‌های صوتی آماده است</h2>
-                            <p className="text-slate-500">روند آپلود و تایید را در یک نما ببینید و سریعا اقدام کنید.</p>
-                        </div>
-                        <div className="w-full lg:w-80">
-                            <label className="text-xs text-slate-500 font-semibold block mb-1">
-                                جستجو در فایل‌های پردازش‌شده
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="نام فایل را تایپ کنید..."
-                                    className="w-full pl-10 pr-4 py-2.5 border border-white/70 rounded-2xl bg-white/80 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-300 shadow-sm"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                            </div>
-                            <p className="text-[11px] text-slate-500 mt-1">با تایپ نام، فایل‌های پردازش‌شده زیر فیلتر می‌شوند.</p>
-                        </div>
-                    </div>
-                    <div className="card-divider" />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs font-semibold">
-                        <div className="frosted-chip px-4 py-3 rounded-2xl text-indigo-700 flex items-center justify-between">
-                            <span>در حال پردازش</span>
-                            <span className="text-base">{toPersianDigits(stats.processing)}</span>
-                        </div>
-                        <div className="frosted-chip px-4 py-3 rounded-2xl text-emerald-700 flex items-center justify-between">
-                            <span>تایید شده نهایی</span>
-                            <span className="text-base">{toPersianDigits(stats.approved)}</span>
-                        </div>
-                        <div className="frosted-chip px-4 py-3 rounded-2xl text-amber-700 flex items-center justify-between">
-                            <span>در انتظار</span>
-                            <span className="text-base">{toPersianDigits(stats.pending)}</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="glass-panel rounded-3xl p-6 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-slate-500">نرخ تکمیل</p>
-                            <h3 className="text-2xl font-bold text-slate-900">{toPersianDigits(completionRate)}%</h3>
-                        </div>
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500/20 to-sky-400/20 flex items-center justify-center">
-                            <div className="w-16 h-16 rounded-full bg-white shadow-inner flex items-center justify-center text-indigo-600 font-black text-lg">
-                                {toPersianDigits(stats.total)}
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">در انتظار</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.pending)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">در حال پردازش</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.processing)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                            <span className="text-slate-500">تایید شده</span>
-                            <span className="font-semibold text-slate-800">{toPersianDigits(stats.approved)}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
                 <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
@@ -270,7 +205,7 @@ const DashboardPage: React.FC = () => {
                                                     <div className="text-4xl mb-2">📁</div>
                                                     <p className="text-lg font-medium mb-1">فایل صوتی یافت نشد</p>
                                                     <p className="text-sm">
-                                                        {searchTerm || statusFilter !== 'all'
+                                                        {headerSearchTerm || statusFilter !== 'all'
                                                             ? 'فایل صوتی‌هایی با این فیلتر وجود ندارد'
                                                             : 'هنوز فایل صوتیی آپلود نشده است'}
                                                     </p>

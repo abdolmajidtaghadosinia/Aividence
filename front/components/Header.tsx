@@ -32,7 +32,12 @@ const ProfileDropdown: React.FC<{ onLogoutClick: () => void }> = ({ onLogoutClic
  *
  * @returns {JSX.Element} Composed header block with search, notifications, and session controls.
  */
-const Header: React.FC = () => {
+interface HeaderProps {
+    searchTerm: string;
+    onSearchChange: (value: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { files } = useFiles();
@@ -99,6 +104,8 @@ const Header: React.FC = () => {
                                 type="text"
                                 placeholder="جستجو در فایل‌های صوتی، پروژه‌ها یا عبارات..."
                                 className="w-full pl-12 pr-4 py-3 rounded-2xl border border-white/70 bg-white/80 shadow-inner focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                                value={searchTerm}
+                                onChange={(e) => onSearchChange(e.target.value)}
                             />
                         </div>
                         <div className="flex flex-wrap gap-2">
