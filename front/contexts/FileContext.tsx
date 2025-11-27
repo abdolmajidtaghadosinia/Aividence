@@ -31,6 +31,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
   const statusMap: { [key: string]: FileStatus } = {
     'AP': FileStatus.Pending,
     'P': FileStatus.Processing,
+    'Pr': FileStatus.Processing,
     'PD': FileStatus.Processed,
     'A': FileStatus.Approved,
     'E': FileStatus.Rejected, // خطا را به عنوان رد شده نمایش می‌دهیم
@@ -49,13 +50,18 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     return `${persianYear}/${month}/${day}`;
   };
 
+  const statusDisplay = apiFile.status_display || '';
+  const mappedStatus = statusMap[apiFile.status]
+    || (statusDisplay.includes('پردازش') ? FileStatus.Processing : FileStatus.Pending);
+
   return {
     id: apiFile.id.toString(),
     name: apiFile.file_name,
     uploadDate: formatPersianDate(apiFile.uploaded_at),
     type: apiFile.file_type_display,
     subCollection: apiFile.subset_title,
-    status: statusMap[apiFile.status] || FileStatus.Pending,
+    status: mappedStatus,
+    statusDisplay,
     task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
   } as FileData;
@@ -128,7 +134,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             return {
               ...file,
               progress: Number.isFinite(numericProgress) ? numericProgress : 0,
-              progressLabel: taskProgress.status,
+              progressLabel: taskProgress.status || file.statusDisplay,
             } as FileData;
           } catch (progressError) {
             console.warn('Unable to fetch task progress', progressError);
@@ -141,7 +147,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         processingProgress.forEach((file) => {
           const previousStatus = previousStatusesRef.current[file.id];
           if (previousStatus && previousStatus !== file.status) {
-            const statusLabel = file.status || file.subCollection || 'به‌روزرسانی شد';
+            const statusLabel = file.statusDisplay || file.status || file.subCollection || 'به‌روزرسانی شد';
             notifyStatusChange(file.name, statusLabel.toString());
           }
         });

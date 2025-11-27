@@ -14,6 +14,7 @@ export interface FileData {
   type: string;
   subCollection: string;
   status: FileStatus;
+  statusDisplay?: string;
   task_id?: string | null;
   progress?: number;
   progressLabel?: string;
