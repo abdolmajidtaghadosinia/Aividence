@@ -8,6 +8,7 @@ import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile } from '../
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
+import ModalPortal from '../components/ModalPortal';
 
 interface LayoutContext {
     headerSearchTerm: string;
@@ -429,42 +430,44 @@ const DashboardPage: React.FC = () => {
             {selectedFile && <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} />}
 
             {confirmAction && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${confirmAction.type === 'delete' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
-                                {confirmAction.type === 'delete' ? <TrashIcon className="w-5 h-5" /> : <StopIcon className="w-5 h-5" />}
+                <ModalPortal>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+                        <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 border border-slate-100">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${confirmAction.type === 'delete' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'}`}>
+                                    {confirmAction.type === 'delete' ? <TrashIcon className="w-5 h-5" /> : <StopIcon className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">
+                                        {confirmAction.type === 'delete' ? 'حذف فایل از لیست' : 'توقف پردازش و حذف از صف'}
+                                    </h3>
+                                    <p className="text-sm text-slate-600">{confirmAction.file.name}</p>
+                                </div>
                             </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900">
-                                    {confirmAction.type === 'delete' ? 'حذف فایل از لیست' : 'توقف پردازش و حذف از صف'}
-                                </h3>
-                                <p className="text-sm text-slate-600">{confirmAction.file.name}</p>
+                            <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                                {confirmAction.type === 'delete'
+                                    ? 'با تایید، این فایل از لیست شما حذف می‌شود. آیا مطمئن هستید؟'
+                                    : 'با تایید، پردازش این فایل متوقف شده و آیتم از صف حذف می‌شود. ادامه می‌دهید؟'}
+                            </p>
+                            <div className="flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setConfirmAction(null)}
+                                    className="px-4 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                                    disabled={isActing}
+                                >
+                                    انصراف
+                                </button>
+                                <button
+                                    onClick={handleConfirmAction}
+                                    disabled={isActing}
+                                    className={`px-4 py-2 text-sm rounded-xl text-white shadow-md ${confirmAction.type === 'delete' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-amber-500 hover:bg-amber-600'} disabled:opacity-60`}
+                                >
+                                    {isActing ? 'در حال انجام...' : 'تایید و حذف'}
+                                </button>
                             </div>
-                        </div>
-                        <p className="text-sm text-slate-600 leading-relaxed mb-6">
-                            {confirmAction.type === 'delete'
-                                ? 'با تایید، این فایل از لیست شما حذف می‌شود. آیا مطمئن هستید؟'
-                                : 'با تایید، پردازش این فایل متوقف شده و آیتم از صف حذف می‌شود. ادامه می‌دهید؟'}
-                        </p>
-                        <div className="flex items-center justify-end gap-3">
-                            <button
-                                onClick={() => setConfirmAction(null)}
-                                className="px-4 py-2 text-sm rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
-                                disabled={isActing}
-                            >
-                                انصراف
-                            </button>
-                            <button
-                                onClick={handleConfirmAction}
-                                disabled={isActing}
-                                className={`px-4 py-2 text-sm rounded-xl text-white shadow-md ${confirmAction.type === 'delete' ? 'bg-rose-500 hover:bg-rose-600' : 'bg-amber-500 hover:bg-amber-600'} disabled:opacity-60`}
-                            >
-                                {isActing ? 'در حال انجام...' : 'تایید و حذف'}
-                            </button>
                         </div>
                     </div>
-                </div>
+                </ModalPortal>
             )}
         </div>
     );
