@@ -49,7 +49,7 @@ const Sidebar: React.FC = () => {
      */
     const getNavLinkClass = (isActive: boolean) => {
         const baseClass =
-            'group flex items-center gap-x-3 px-4 py-3 rounded-2xl transition-all duration-200 border backdrop-blur-sm shadow-sm';
+            'group flex items-center gap-x-4 px-5 py-4 rounded-2xl transition-all duration-200 border backdrop-blur-sm shadow-sm text-base';
         return isActive
             ? `${baseClass} bg-gradient-to-l from-indigo-500/90 via-sky-500/90 to-cyan-500/90 text-white border-transparent shadow-lg shadow-indigo-100 hover:shadow-xl hover:-translate-y-0.5`
             : `${baseClass} bg-white/70 text-slate-700 border-white/60 hover:border-indigo-100 hover:shadow-md hover:-translate-y-0.5`;
@@ -64,15 +64,15 @@ const Sidebar: React.FC = () => {
      */
     const renderIcon = (icon: React.ReactNode, gradient: string) => (
         <span
-            className={`shrink-0 p-3 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-100/60 flex items-center justify-center`}
+            className={`shrink-0 p-3.5 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-100/60 flex items-center justify-center text-lg`}
         >
             {icon}
         </span>
     );
 
     return (
-        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 md:sticky md:top-6 self-start max-h-[calc(100vh-32px)] md:overflow-y-auto animate-fade-in-down">
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-3 hover-lift">
+        <aside className="w-80 max-w-[22rem] glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-6 md:sticky md:top-6 self-start max-h-[calc(100vh-32px)] md:overflow-y-auto overflow-x-hidden animate-fade-in-down">
+            <div className="p-5 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-4 hover-lift">
                 <div className="w-12 h-12 rounded-2xl bg-white shadow flex items-center justify-center">
                     <LogoIcon className="w-7 h-7 text-indigo-600" />
                 </div>
@@ -80,11 +80,10 @@ const Sidebar: React.FC = () => {
                     <Logo size="sm" showText className="justify-start" />
                     <p className="text-xs text-slate-500 mt-1">پنل مدیریت هوشمند</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs bg-emerald-50 text-emerald-600 border border-emerald-100">Online</span>
             </div>
 
-            <nav className="flex-grow py-6">
-                <p className="text-xs text-slate-400 font-semibold px-2 mb-3">بخش ها</p>
+            <nav className="flex-grow py-6 overflow-x-hidden">
+                <p className="text-sm text-slate-400 font-semibold px-2 mb-4">بخش ها</p>
                 <ul className="space-y-3">
                     {menuItems.map((item, index) => (
                         <li key={item.label} style={{ animationDelay: `${index * 60}ms` }} className="animate-card">
@@ -95,8 +94,8 @@ const Sidebar: React.FC = () => {
                                 >
                                     {renderIcon(item.icon, item.gradient)}
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold">{item.label}</span>
-                                        <span className="text-xs text-slate-500">{item.description}</span>
+                                        <span className="text-base font-extrabold">{item.label}</span>
+                                        <span className="text-sm text-slate-500">{item.description}</span>
                                     </div>
                                 </div>
                             ) : (
@@ -105,10 +104,10 @@ const Sidebar: React.FC = () => {
                                         <>
                                             {renderIcon(item.icon, item.gradient)}
                                             <div className="flex flex-col text-start">
-                                                <span className={`text-sm font-bold ${isActive ? 'text-white' : 'text-slate-800'}`}>
+                                                <span className={`text-base font-extrabold ${isActive ? 'text-white' : 'text-slate-800'}`}>
                                                     {item.label}
                                                 </span>
-                                                <span className={`text-xs transition-colors ${isActive ? 'text-white/90' : 'text-slate-600 group-hover:text-slate-700'}`}>
+                                                <span className={`text-sm transition-colors ${isActive ? 'text-white/90' : 'text-slate-600 group-hover:text-slate-700'}`}>
                                                     {item.description}
                                                 </span>
                                             </div>
