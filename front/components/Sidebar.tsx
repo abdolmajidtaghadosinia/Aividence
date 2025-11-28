@@ -15,28 +15,28 @@ const Sidebar: React.FC = () => {
             label: 'داشبورد',
             description: 'مرور سریع وضعیت سامانه',
             icon: <DashboardIcon className="w-6 h-6" />,
-            gradient: 'from-indigo-500 via-sky-500 to-cyan-400',
+            gradient: 'from-[#4b5f95] via-[#3c4f7f] to-[#1f2a44]',
         },
         {
             to: '/upload',
             label: 'بارگذاری صوت',
             description: 'ارسال فایل جدید به صف',
             icon: <UploadIcon className="w-6 h-6" />,
-            gradient: 'from-amber-400 via-orange-400 to-pink-400',
+            gradient: 'from-[#f59e0b] via-[#ef9f64] to-[#c2410c]',
         },
         {
             to: '/dictionary',
             label: 'دیکشنری',
             description: 'مدیریت واژه‌های کلیدی',
             icon: <DictionaryIcon className="w-6 h-6" />,
-            gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
+            gradient: 'from-[#2dd4bf] via-[#14b8a6] to-[#0f766e]',
         },
         {
             to: undefined,
             label: 'دستیار هوشمند',
             description: 'به زودی فعال می‌شود',
             icon: <AssistantIcon className="w-6 h-6" />,
-            gradient: 'from-violet-500 via-purple-500 to-indigo-500',
+            gradient: 'from-[#7c83ff] via-[#6366f1] to-[#35477d]',
             disabled: true,
         },
     ];
@@ -51,8 +51,8 @@ const Sidebar: React.FC = () => {
         const baseClass =
             'group flex items-center gap-x-4 px-5 py-4 rounded-[22px] transition-all duration-200 border backdrop-blur-sm shadow-sm text-base';
         return isActive
-            ? `${baseClass} bg-gradient-to-l from-[#6c5dd3] via-[#8a7aec] to-[#55c5ff] text-white border-transparent shadow-lg shadow-indigo-100 hover:shadow-xl hover:-translate-y-0.5`
-            : `${baseClass} bg-white/85 text-slate-700 border-white/70 hover:border-indigo-100 hover:shadow-md hover:-translate-y-0.5`;
+            ? `${baseClass} bg-gradient-to-l from-[#4b5f95] via-[#33436b] to-[#1f2a44] text-white border-transparent shadow-lg shadow-indigo-800/40 hover:shadow-xl hover:-translate-y-0.5`
+            : `${baseClass} bg-slate-900/70 text-slate-200 border-slate-800 hover:border-slate-600 hover:shadow-md hover:-translate-y-0.5`;
     };
 
     /**
@@ -64,21 +64,21 @@ const Sidebar: React.FC = () => {
      */
     const renderIcon = (icon: React.ReactNode, gradient: string) => (
         <span
-            className={`shrink-0 p-3.5 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-100/60 flex items-center justify-center text-lg`}
+            className={`shrink-0 p-3.5 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-900/40 flex items-center justify-center text-lg`}
         >
             {icon}
         </span>
     );
 
     return (
-        <aside className="w-80 max-w-[23rem] neo-panel flex-shrink-0 flex-col hidden md:flex rounded-[30px] p-6 md:sticky md:top-6 self-start max-h-[calc(100vh-32px)] md:overflow-y-auto overflow-x-hidden animate-fade-in-down">
-            <div className="p-5 rounded-[26px] bg-gradient-to-br from-white via-[#f1edff] to-[#f8f6ff] border border-white/80 shadow-inner flex items-center gap-4 hover-lift">
-                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#6c5dd3] to-[#55c5ff] shadow-lg flex items-center justify-center text-white">
+        <aside className="w-80 max-w-[23rem] flex-shrink-0 flex-col hidden md:flex rounded-[30px] p-6 md:sticky md:top-6 self-start max-h-[calc(100vh-32px)] md:overflow-y-auto overflow-x-hidden animate-fade-in-down bg-gradient-to-b from-[#0f172a] via-[#0e1b31] to-[#0a1326] border border-slate-800/70 shadow-[0_24px_70px_rgba(8,15,29,0.4)] text-slate-100">
+            <div className="p-5 rounded-[26px] bg-gradient-to-br from-[#111a2e] via-[#0f172a] to-[#0a1323] border border-slate-800 shadow-inner flex items-center gap-4 hover-lift">
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#6bc3f8] to-[#4b5f95] shadow-lg flex items-center justify-center text-white">
                     <LogoIcon className="w-7 h-7" />
                 </div>
                 <div className="flex-1">
-                    <Logo size="sm" showText className="justify-start" />
-                    <p className="text-xs text-slate-500 mt-1">داشبورد پردازش صوتی</p>
+                    <Logo size="sm" showText className="justify-start text-white" />
+                    <p className="text-xs text-slate-400 mt-1">داشبورد پردازش صوتی</p>
                 </div>
             </div>
 
