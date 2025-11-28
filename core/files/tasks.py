@@ -127,8 +127,13 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
             continue
 
         if 500 <= response.status_code < 600:
-            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ وضعیت خطا ثبت می‌شود")
-            return {"error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم", "status": 'E', "code": "ServiceUnavailable"}
+            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ تلاش بعدی به تعویق افتاد")
+            return {
+                "error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم",
+                "status": 'AP',
+                "code": "ServiceUnavailable",
+                "next_retry_seconds": wait,
+            }
 
         return {"error": "خطا در آپلود فایل", "status": 'E'}
 
@@ -413,13 +418,24 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                 error_code = file_token.get("code")
 
                 if error_code in {"ServiceUnavailable", "TransientUploadError"}:
-                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ وضعیت خطا ثبت می‌شود")
-                    update_audio_status(audio_id, 'E')
-                    raise_task_failure(
-                        self,
-                        'سرویس پردازش موقتا در دسترس نیست. لطفا بعدا دوباره تلاش کنید.',
-                        progress=5,
-                    )
+                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ فایل در صف انتظار می‌ماند")
+                    update_audio_status(audio_id, 'AP')
+
+                    retry_in = file_token.get("next_retry_seconds", 0)
+                    status_message = 'سرویس پردازش موقتا در دسترس نیست؛ بعدا دوباره تلاش می‌کنیم'
+
+                    try:
+                        self.update_state(state='PROGRESS', meta={'progress': 0, 'status': status_message})
+                    except Exception:
+                        logger.debug("⚠️ ثبت پیام وضعیت موقت در Celery ناموفق بود")
+
+                    # اگر Celery اجازه دهد، تسک را با تاخیر دوباره صف می‌کنیم
+                    try:
+                        self.retry(countdown=max(retry_in, 5))
+                    except Exception:
+                        logger.info("⚠️ امکان صف مجدد خودکار نبود؛ فایل در حالت انتظار باقی می‌ماند")
+
+                    return {"error": status_message, "status": 'AP'}
 
                 # اگر اعتبار سرویس کافی نباشد، فایل را به حالت انتظار پردازش برگردانیم تا به صورت خودکار رد نشود
                 if error_code == "NoEnoughCredit" or error_status == 'AP':
