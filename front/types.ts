@@ -4,6 +4,7 @@ export enum FileStatus {
   Processing = 'در حال پردازش هوشمند',
   Processed = 'محتوای تولید شده',
   Approved = 'تایید شده',
+  ServiceUnavailable = 'سرویس پردازش در دسترس نیست',
   Rejected = 'رد شده',
 }
 
@@ -65,6 +66,7 @@ export interface DashboardResponse {
     AP: number;
     P: number;
     PD: number;
+    SU: number;
     A: number;
     E: number;
     R: number;

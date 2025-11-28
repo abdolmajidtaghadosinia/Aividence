@@ -130,7 +130,7 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
             logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ تلاش بعدی به تعویق افتاد")
             return {
                 "error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم",
-                "status": 'AP',
+                "status": 'SU',
                 "code": "ServiceUnavailable",
                 "next_retry_seconds": wait,
             }
@@ -418,24 +418,28 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                 error_code = file_token.get("code")
 
                 if error_code in {"ServiceUnavailable", "TransientUploadError"}:
-                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ فایل در صف انتظار می‌ماند")
-                    update_audio_status(audio_id, 'AP')
+                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ فایل در حالت عدم دسترسی ثبت می‌شود")
+                    update_audio_status(audio_id, 'SU')
 
                     retry_in = file_token.get("next_retry_seconds", 0)
-                    status_message = 'سرویس پردازش موقتا در دسترس نیست؛ بعدا دوباره تلاش می‌کنیم'
+                    status_message = 'سرویس پردازش موقتا در دسترس نیست؛ لطفاً بعداً دوباره تلاش کنید'
 
                     try:
-                        self.update_state(state='PROGRESS', meta={'progress': 0, 'status': status_message})
+                        self.update_state(
+                            state=states.FAILURE,
+                            meta={
+                                'exc_type': 'RuntimeError',
+                                'exc_message': status_message,
+                                'exc_module': 'builtins',
+                                'progress': 0,
+                                'status': status_message,
+                                'retry_after': retry_in,
+                            }
+                        )
                     except Exception:
                         logger.debug("⚠️ ثبت پیام وضعیت موقت در Celery ناموفق بود")
 
-                    # اگر Celery اجازه دهد، تسک را با تاخیر دوباره صف می‌کنیم
-                    try:
-                        self.retry(countdown=max(retry_in, 5))
-                    except Exception:
-                        logger.info("⚠️ امکان صف مجدد خودکار نبود؛ فایل در حالت انتظار باقی می‌ماند")
-
-                    return {"error": status_message, "status": 'AP'}
+                    return {"error": status_message, "status": 'SU', "code": error_code}
 
                 # اگر اعتبار سرویس کافی نباشد، فایل را به حالت انتظار پردازش برگردانیم تا به صورت خودکار رد نشود
                 if error_code == "NoEnoughCredit" or error_status == 'AP':
@@ -452,7 +456,12 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
 
     except Exception as e:
         logger.error(f"❌ خطای کلی در پردازش: {str(e)}")
-        update_audio_status(audio_id, 'E')
+        try:
+            audio = Audio.objects.get(id=audio_id)
+            if audio.status != 'SU':
+                update_audio_status(audio_id, 'E')
+        except Exception:
+            update_audio_status(audio_id, 'E')
         raise_task_failure(self, str(e))
 
     return {"success": True, "audio_id": audio_id, "status": 'P'}
@@ -560,6 +569,10 @@ def check_processing_status(audio_id):
                 print(f"✅ وضعیت فایل {audio_id} به 'تایید شده' تغییر یافت")
             return 'A'  # تایید شده
         else:
+            # اگر رکورد وجود ندارد و خطا یا عدم دسترسی ثبت شده، همان وضعیت حفظ شود
+            if audio.status in {'E', 'R', 'SU'}:
+                return audio.status
+
             # اگر رکورد وجود ندارد، وضعیت باید "در حال پردازش" باشد
             if audio.status != 'P':
                 audio.status = 'P'

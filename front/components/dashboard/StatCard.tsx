@@ -6,7 +6,7 @@ import { FileStatus } from '../../types';
 interface StatCardProps {
     title: string;
     count: number;
-    colorTheme: 'orange' | 'yellow' | 'blue' | 'green' | 'gray' | 'purple';
+    colorTheme: 'orange' | 'yellow' | 'blue' | 'green' | 'gray' | 'purple' | 'amber';
     status: FileStatus | 'all';
     onFilterClick: (status: FileStatus | 'all') => void;
     isActive: boolean;
@@ -18,6 +18,7 @@ const THEMES: Record<string, { bg: string; text: string; icon: React.ReactElemen
     blue: { bg: 'from-[#e7edf7] via-[#dbe4f4] to-[#d2ddef]', text: 'text-[#2f6cb3]', icon: <ProcessingIcon />, accent: 'bg-[#7aa4d6]' },
     green: { bg: 'from-[#e6f4f0] via-[#d6ebe5] to-[#cbe3dd]', text: 'text-[#1f8a6a]', icon: <CheckIcon />, accent: 'bg-[#70c4a3]' },
     gray: { bg: 'from-[#eceff4] via-[#e2e6ee] to-[#d8dde8]', text: 'text-[#475569]', icon: <ClockIcon />, accent: 'bg-[#c1c8d6]' },
+    amber: { bg: 'from-[#fff4e5] via-[#fde9cc] to-[#f9d9a8]', text: 'text-[#b45309]', icon: <ClockIcon />, accent: 'bg-[#fbbf24]' },
     purple: { bg: 'from-[#e8e9f6] via-[#dcdeef] to-[#d2d6eb]', text: 'text-[#4c579f]', icon: <ProcessingIcon />, accent: 'bg-[#8d9add]' },
 };
 

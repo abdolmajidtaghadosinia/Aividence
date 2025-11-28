@@ -380,6 +380,6 @@ export const exportCustomContentZip = async (audioId: number): Promise<void> => 
 // -----------------------------
 // Update audio status (approve)
 // -----------------------------
-export const updateAudioStatus = async (audioId: number, status: 'AP' | 'P' | 'PD' | 'A' | 'R' | 'E') => {
+export const updateAudioStatus = async (audioId: number, status: 'AP' | 'P' | 'PD' | 'A' | 'R' | 'E' | 'SU') => {
     return Api.put(`/api/v1/files/audio/${audioId}/status/`, { status });
 };

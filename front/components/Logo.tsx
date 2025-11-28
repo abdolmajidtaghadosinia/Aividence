@@ -52,10 +52,10 @@ const Logo: React.FC<LogoProps> = ({
       {/* متن لوگو */}
       {showText && (
         <div className="flex flex-col">
-          <span className={`font-bold text-slate-800 ${textSizeClasses[size]}`}>
+          <span className={`font-extrabold text-slate-50 drop-shadow-sm ${textSizeClasses[size]}`}>
             پتروشیمی نوری
           </span>
-          <span className={`text-slate-400 whitespace-nowrap text-xs`}>
+          <span className="text-slate-200/80 whitespace-nowrap text-xs">
              دستیار مستندساز هوشمند
           </span>
         </div>

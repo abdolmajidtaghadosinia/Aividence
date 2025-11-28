@@ -41,6 +41,7 @@ class AudioListView(generics.ListAPIView):
             'AP': queryset.filter(status='AP').count(),
             'P': queryset.filter(status='P').count(),
             'PD': queryset.filter(status='PD').count(),
+            'SU': queryset.filter(status='SU').count(),
             'A': queryset.filter(status='A').count(),
             'E': queryset.filter(status='E').count(),
             'R': queryset.filter(status='R').count(),

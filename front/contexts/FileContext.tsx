@@ -34,6 +34,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     'P': FileStatus.Processing,
     'Pr': FileStatus.Processing,
     'PD': FileStatus.Processed,
+    'SU': FileStatus.ServiceUnavailable,
     'A': FileStatus.Approved,
     'E': FileStatus.Rejected, // خطا را به عنوان رد شده نمایش می‌دهیم
     'R': FileStatus.Rejected,
@@ -60,6 +61,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     subCollection: apiFile.subset_title,
     status: mappedStatus,
     statusDisplay,
+    progressLabel: statusDisplay,
     task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
     uploader: (apiFile as any).uploader || undefined,

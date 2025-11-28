@@ -8,6 +8,7 @@ interface StatusChartProps {
         processing: number;
         processed: number;
         approved: number;
+        unavailable: number;
         rejected: number;
         total: number;
     };
@@ -41,13 +42,14 @@ const DonutSegment: React.FC<{
 };
 
 const StatusChart: React.FC<StatusChartProps> = ({ stats }) => {
-    const { total, approved, rejected, pending, processing, processed } = stats;
+    const { total, approved, rejected, pending, processing, processed, unavailable } = stats;
 
     const data = [
         { name: FileStatus.Approved, value: approved, color: '#22c55e' }, // green-500
         { name: FileStatus.Processed, value: processed, color: '#a855f7' }, // purple-500
         { name: FileStatus.Pending, value: pending, color: '#eab308' }, // yellow-500
         { name: FileStatus.Processing, value: processing, color: '#0ea5e9' }, // sky-500
+        { name: FileStatus.ServiceUnavailable, value: unavailable, color: '#f59e0b' }, // amber-500
         { name: FileStatus.Rejected, value: rejected, color: '#ef4444' }, // red-500
     ];
 

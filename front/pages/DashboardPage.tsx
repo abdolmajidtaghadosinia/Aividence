@@ -4,7 +4,7 @@ import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
 import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon, TrashIcon, StopIcon } from '../components/Icons';
-import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile } from '../api/api';
+import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile, reprocessAudio } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
@@ -21,6 +21,7 @@ const DashboardPage: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; file: FileData } | null>(null);
     const [isActing, setIsActing] = useState(false);
+    const [retryingId, setRetryingId] = useState<string | null>(null);
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
@@ -49,6 +50,20 @@ const DashboardPage: React.FC = () => {
         } finally {
             setIsActing(false);
             setConfirmAction(null);
+        }
+    };
+
+    const handleRetryProcessing = async (file: FileData) => {
+        if (!file.upload_uuid) return;
+        setRetryingId(file.id);
+        try {
+            await reprocessAudio(file.upload_uuid);
+            await refreshFiles();
+        } catch (err) {
+            console.error('Unable to retry processing', err);
+            alert('سرویس پردازش موقتا در دسترس نیست. لطفاً کمی بعد دوباره تلاش کنید.');
+        } finally {
+            setRetryingId(null);
         }
     };
 
@@ -83,6 +98,7 @@ const DashboardPage: React.FC = () => {
         processing: files.filter(f => f.status === FileStatus.Processing).length,
         processed: files.filter(f => f.status === FileStatus.Processed).length,
         approved: files.filter(f => f.status === FileStatus.Approved).length,
+        unavailable: files.filter(f => f.status === FileStatus.ServiceUnavailable).length,
         rejected: files.filter(f => f.status === FileStatus.Rejected).length,
     }), [files]);
 
@@ -229,6 +245,7 @@ const DashboardPage: React.FC = () => {
                 <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
                 <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
                 <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
+                <StatCard title="سرویس در دسترس نیست" count={stats.unavailable} colorTheme="amber" status={FileStatus.ServiceUnavailable} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.ServiceUnavailable} />
                 <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
                 <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
             </div>
@@ -324,6 +341,20 @@ const DashboardPage: React.FC = () => {
                                                                         style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}
                                                                     ></div>
                                                                 </div>
+                                                            </div>
+                                                        )}
+                                                        {file.status === FileStatus.ServiceUnavailable && (
+                                                            <div className="space-y-2">
+                                                                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 leading-6">
+                                                                    سرویس پردازش در دسترس نیست. لطفاً چند دقیقه دیگر تلاش کنید.
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleRetryProcessing(file)}
+                                                                    className="w-full text-center text-[13px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded-xl py-2 hover:bg-amber-200 transition disabled:opacity-50"
+                                                                    disabled={retryingId === file.id}
+                                                                >
+                                                                    {retryingId === file.id ? 'در حال تلاش مجدد...' : 'تلاش دوباره برای پردازش'}
+                                                                </button>
                                                             </div>
                                                         )}
                                                     </div>

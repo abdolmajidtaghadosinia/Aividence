@@ -80,6 +80,7 @@ export const STATUS_STYLES: { [key in FileStatus]: { bg: string; text: string; d
   [FileStatus.Pending]: { bg: 'bg-yellow-100', text: 'text-yellow-700', dot: 'bg-yellow-500' },
   [FileStatus.Processing]: { bg: 'bg-sky-100', text: 'text-sky-700', dot: 'bg-sky-500' },
   [FileStatus.Processed]: { bg: 'bg-purple-100', text: 'text-purple-700', dot: 'bg-purple-500' },
+  [FileStatus.ServiceUnavailable]: { bg: 'bg-amber-100', text: 'text-amber-700', dot: 'bg-amber-500' },
   [FileStatus.Rejected]: { bg: 'bg-red-100', text: 'text-red-700', dot: 'bg-red-500' },
 };
 
