@@ -16,7 +16,7 @@ import Logo from './Logo';
  * @returns {JSX.Element} Action sheet with a logout trigger.
  */
 const ProfileDropdown: React.FC<{ onLogoutClick: () => void }> = ({ onLogoutClick }) => (
-    <div className="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 p-2 animate-fade-in-down z-50">
+    <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 p-2 animate-fade-in-down z-[70]">
         <button
             onClick={onLogoutClick}
             className="w-full flex items-center gap-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
@@ -60,7 +60,7 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
 
     return (
         <>
-            <header className="relative overflow-hidden rounded-[32px] neo-widget animate-soft-pop backdrop-blur-xl text-slate-50">
+            <header className="relative overflow-visible rounded-[32px] neo-widget animate-soft-pop backdrop-blur-xl text-slate-50">
                 <div className="pointer-events-none absolute inset-0">
                     <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-[#1f2f52]/60 via-[#1c2948]/50 to-[#0f172a]/40 blur-[110px] animate-breath" />
                     <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gradient-to-br from-[#0ea5e9]/15 via-[#f59e0b]/12 to-[#7c3aed]/12 blur-[120px] animate-pulse-slow" />
