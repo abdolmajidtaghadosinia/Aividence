@@ -127,8 +127,8 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
             continue
 
         if 500 <= response.status_code < 600:
-            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ فایل به حالت انتظار برمی‌گردد")
-            return {"error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم", "status": 'AP', "code": "ServiceUnavailable"}
+            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ وضعیت خطا ثبت می‌شود")
+            return {"error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم", "status": 'E', "code": "ServiceUnavailable"}
 
         return {"error": "خطا در آپلود فایل", "status": 'E'}
 
@@ -411,6 +411,15 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
             if isinstance(file_token, dict):
                 error_status = file_token.get("status")
                 error_code = file_token.get("code")
+
+                if error_code in {"ServiceUnavailable", "TransientUploadError"}:
+                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ وضعیت خطا ثبت می‌شود")
+                    update_audio_status(audio_id, 'E')
+                    raise_task_failure(
+                        self,
+                        'سرویس پردازش موقتا در دسترس نیست. لطفا بعدا دوباره تلاش کنید.',
+                        progress=5,
+                    )
 
                 # اگر اعتبار سرویس کافی نباشد، فایل را به حالت انتظار پردازش برگردانیم تا به صورت خودکار رد نشود
                 if error_code == "NoEnoughCredit" or error_status == 'AP':
