@@ -17,8 +17,9 @@ const MainLayout: React.FC = () => {
             <div className="pointer-events-none absolute -bottom-32 -right-6 h-80 w-80 rounded-full bg-gradient-to-tr from-[#1b2c48] via-[#0f172a] to-[#09101f] blur-[120px] opacity-70" />
             <div className="pointer-events-none absolute top-32 left-1/2 h-72 w-72 rounded-full bg-gradient-to-br from-[#1d2f4a] via-[#11233c] to-[#0a1426] blur-[125px] opacity-60" />
 
-            <div className="relative flex items-start gap-5 px-4 sm:px-6 lg:px-10 py-6 floating-dots grid-overlay">
-                <Sidebar />
+            <Sidebar />
+
+            <div className="relative flex items-start gap-5 px-4 sm:px-6 lg:px-10 py-6 floating-dots grid-overlay md:pr-[23rem] lg:pr-[25rem]">
                 <div className="flex-1 flex flex-col gap-5 max-w-7xl mx-auto w-full">
                     <Header searchTerm={headerSearchTerm} onSearchChange={setHeaderSearchTerm} />
                     <main className="flex-grow">

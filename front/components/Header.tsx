@@ -115,6 +115,13 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                             >
                                 <BellIcon className="w-5 h-5 text-amber-200" />
                             </button>
+                            <button
+                                onClick={() => setLogoutModalOpen(true)}
+                                className="hidden sm:inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-rose-500 to-rose-600 px-4 py-2 text-sm font-bold text-white shadow-lg border border-rose-300/40 hover:-translate-y-0.5 hover:shadow-xl transition"
+                            >
+                                <LogoutIcon className="w-5 h-5" />
+                                <span>خروج از سیستم</span>
+                            </button>
                         </div>
                     </div>
 

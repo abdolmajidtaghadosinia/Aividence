@@ -245,7 +245,6 @@ const DashboardPage: React.FC = () => {
                 <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
                 <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
                 <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
-                <StatCard title="سرویس در دسترس نیست" count={stats.unavailable} colorTheme="amber" status={FileStatus.ServiceUnavailable} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.ServiceUnavailable} />
                 <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
                 <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
             </div>
@@ -475,7 +474,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-6 xl:sticky xl:top-4">
                     <div className="glass-panel rounded-3xl p-6 animate-card" style={{ animationDelay: '120ms' }}>
                         <StatusChart stats={stats} />
                     </div>
