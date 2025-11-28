@@ -40,19 +40,16 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
     url = "https://www.eboo.ir/api/ocr/getway"
     logger.info(f"🔄 شروع آپلود فایل: {audio_name} از مسیر: {audio_path}")
 
-    payload = {'command': 'addfile',
-    'token': 'dh4wReVMSttw38ps86wDj77Bteu2MkyY'}
-    
+    payload = {"command": "addfile", "token": "dh4wReVMSttw38ps86wDj77Bteu2MkyY"}
+
     if not os.path.isabs(audio_path):
-        # اگر مسیر نسبی بود، تلاش می‌کنیم از MEDIA_ROOT بسازیم
         audio_path = os.path.join(settings.MEDIA_ROOT, audio_path)
         logger.info(f"📁 مسیر نسبی تبدیل شد به: {audio_path}")
-    
+
     if not os.path.exists(audio_path):
         logger.error(f"❌ مسیر فایل یافت نشد: {audio_path}")
         return {"error": "فایل فیزیکی یافت نشد", "status": 'E'}
 
-    # بررسی حجم فایل
     file_size = os.path.getsize(audio_path)
     logger.info(f"📊 حجم فایل: {file_size / (1024*1024):.2f} مگابایت")
 
@@ -66,72 +63,74 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
     except Exception as e:
         logger.warning(f"⚠️ خطا در تشخیص نوع فایل: {e}")
 
-    try:
-        audio_file = open(audio_path, 'rb')
-        logger.info("✅ فایل با موفقیت باز شد")
-    except Exception as e:
-        logger.error(f"❌ عدم امکان باز کردن فایل برای آپلود: {e}")
-        return {"error": "عدم امکان باز کردن فایل", "status": 'E'}
-
-    files = [
-        ('filehandle', (os.path.basename(audio_name) or os.path.basename(audio_path), audio_file, mime))
-    ]
-    
     headers = {
-    'Cookie': 'XSRF-TOKEN=eyJpdiI6ImQ5MjVZc2V3RFlEeWxNbXdha1cwOUE9PSIsInZhbHVlIjoiQmhmUC9oRlh2WVN5YVYydmJvNDR6UkZjeGowVURsN20vZUJQNk9kSHJBVHlzY2V6MUpMSzR2a0dOeDlxTFdlWHRJY0xPSW0xYnpxRHRIZkF4d0xtenQ4Zk40ZVlhaUNhM2tza1ZmOWl6QTIvRVhNVzlBL0VWaWxPMnpLNlRtd0giLCJtYWMiOiIxMGY2OWIyMjZjNzY1YWY3ZmRjMzQwMGU2MTc2MmQ0N2JkYjkwMjM4YWUzYzBiNDg3NWZhNmEwMTFiMjcxZTE0IiwidGFnIjoiIn0%3D; ebooir_session=eyJpdiI6IjlsTXI1Z09uc29KY1dTdkVMMUVHV0E9PSIsInZhbHVlIjoibFlRZXNNbWZFSExDdG1aMnNYdTNpRWROd1dpWVRnQjltaDkxSkNYTlJrV0JNMEtnMTNjZTV6L3pMZDIwYU9WcGw4WTVhLzc2KzZXZDAxeGpBakRsbXRCMmxnZ1hiejV5cFc0RVp3WG14NXlwTXUxNVVXK2picUtjWjdiODVmTHkiLCJtYWMiOiIzNTgwODViNjQxMzEzN2Y5NmUzNjU1YjhkOTk2NTQzMGQ0MjM1MDY1YTg3YTUzN2RmNDQ0NTJjZTg2MzQ0ZjFmIiwidGFnIjoiIn0%3D'
+        'Cookie': 'XSRF-TOKEN=eyJpdiI6ImQ5MjVZc2V3RFlEeWxNbXdha1cwOUE9PSIsInZhbHVlIjoiQmhmUC9oRlh2WVN5YVYydmJvNDR6UkZjeGowVURsN20vZUJQNk9kSHJBVHlzY2V6MUpMSzR2a0dOeDlxTFdlWHRJY0xPSW0xYnpxRHRIZkF4d0xtenQ4Zk40ZVlhaUNhM2tza1ZmOWl6QTIvRVhNVzlBL0VWaWxPMnpLNlRtd0giLCJtYWMiOiIxMGY2OWIyMjZjNzY1YWY3ZmRjMzQwMGU2MTc2MmQ0N2JkYjkwMjM4YWUzYzBiNDg3NWZhNmEwMTFiMjcxZTE0IiwidGFnIjoiIn0%3D; ebooir_session=eyJpdiI6IjlsTXI1Z09uc29KY1dTdkVMMUVHV0E9PSIsInZhbHVlIjoibFlRZXNNbWZFSExDdG1aMnNYdTNpRWROd1dpWVRnQjltaDkxSkNYTlJrV0JNMEtnMTNjZTV6L3pMZDIwYU9WcGw4WTVhLzc2KzZXZDAxeGpBakRsbXRCMmxnZ1hiejV5cFc0RVp3WG14NXlwTXUxNVVXK2picUtjWjdiODVmTHkiLCJtYWMiOiIzNTgwODViNjQxMzEzN2Y5NmUzNjU1YjhkOTk2NTQzMGQ0MjM1MDY1YTg3YTUzN2RmNDQ0NTJjZTg2MzQ0ZjFmIiwidGFnIjoiIn0%3D'
     }
 
     logger.info(f"🌐 ارسال درخواست به: {url}")
     logger.info(f"📦 Payload: {payload}")
     logger.info(f"🍪 Headers: {list(headers.keys())}")
 
-    try:
-        response = requests.request("POST", url, headers=headers, data=payload, files=files, timeout=60)
-        logger.info(f"📡 پاسخ دریافت شد - کد وضعیت: {response.status_code}")
-    except requests.RequestException as e:
-        logger.error(f"❌ اشکال شبکه در آپلود: {e}")
-        return {"error": "اشکال شبکه در آپلود", "status": 'E'}
-    finally:
+    for attempt in range(retries):
         try:
-            audio_file.close()
-            logger.info("🔒 فایل بسته شد")
-        except Exception as e:
-            logger.warning(f"⚠️ خطا در بستن فایل: {e}")
+            with open(audio_path, 'rb') as audio_file:
+                logger.info("✅ فایل با موفقیت باز شد")
+                files = [
+                    ('filehandle', (os.path.basename(audio_name) or os.path.basename(audio_path), audio_file, mime))
+                ]
 
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            logger.info(f"📄 پاسخ JSON: {data}")
+                response = requests.request("POST", url, headers=headers, data=payload, files=files, timeout=60)
+                logger.info(f"📡 پاسخ دریافت شد - کد وضعیت: {response.status_code}")
         except Exception as e:
-            logger.error(f"❌ خطا در پارس کردن JSON: {e}")
-            logger.error(f"📄 محتوای خام پاسخ: {response.text[:500]}")
-            return {"error": "پاسخ نامعتبر از سرور", "status": 'E'}
-            
-        if data.get("Status") == "Done":
-            result = data.get("FileToken")
-            if result:
-                logger.info(f"✅ فایل با موفقیت آپلود شد - FileToken: {result}")
-                return result
-            else:
+            logger.error(f"❌ اشکال شبکه یا فایل در آپلود (تلاش {attempt + 1}/{retries}): {e}")
+            if attempt < retries - 1:
+                logger.info(f"↩️ تلاش مجدد در {wait} ثانیه")
+                time.sleep(wait)
+                continue
+            return {"error": "اشکال شبکه در آپلود", "status": 'AP', "code": "TransientUploadError"}
+
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                logger.info(f"📄 پاسخ JSON: {data}")
+            except Exception as e:
+                logger.error(f"❌ خطا در پارس کردن JSON: {e}")
+                logger.error(f"📄 محتوای خام پاسخ: {response.text[:500]}")
+                return {"error": "پاسخ نامعتبر از سرور", "status": 'E'}
+
+            if data.get("Status") == "Done":
+                result = data.get("FileToken")
+                if result:
+                    logger.info(f"✅ فایل با موفقیت آپلو شد - FileToken: {result}")
+                    return result
                 logger.warning("⚠️ فایل آپلود نشد - FileToken موجود نیست")
                 return {"error": "فایل آپلود نشد", "status": 'E'}
-        elif data.get("Status") == "NoEnoughCredit":
-            logger.error("❌ خطا از سرویس iotype (Status): NoEnoughCredit - اعتبار حساب کافی نیست")
-            logger.error(f"📄 کل پاسخ: {data}")
-            return {"error": "اعتبار سرویس کافی نیست", "status": 'AP', "code": "NoEnoughCredit"}
-        else:
-            logger.error(f"❌ خطا از سرویس iotype (Status): {data.get('Status')}")
-            logger.error(f"📄 کل پاسخ: {data}")
-            return {"error": "خطا در آپلود فایل", "status": 'E'}
-    else:
+            elif data.get("Status") == "NoEnoughCredit":
+                logger.error("❌ خطا از سرویس iotype (Status): NoEnoughCredit - اعتبار حساب کافی نیست")
+                logger.error(f"📄 کل پاسخ: {data}")
+                return {"error": "اعتبار سرویس کافی نیست", "status": 'AP', "code": "NoEnoughCredit"}
+            else:
+                logger.error(f"❌ خطا از سرویس iotype (Status): {data.get('Status')}")
+                logger.error(f"📄 کل پاسخ: {data}")
+                return {"error": "خطا در آپلود فایل", "status": 'E'}
+
         try:
             body = response.text[:500]
         except Exception:
             body = ''
         logger.error(f"❌ خطا از سرویس iotype (کد {response.status_code})")
         logger.error(f"📄 محتوای پاسخ: {body}")
-        return {"error": "خطا در آپلود فایل", "status": 'E'}
 
+        if 500 <= response.status_code < 600 and attempt < retries - 1:
+            logger.info(f"↩️ تلاش مجدد به دلیل خطای موقت سرور در {wait} ثانیه")
+            time.sleep(wait)
+            continue
+
+        if 500 <= response.status_code < 600:
+            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ فایل به حالت انتظار برمی‌گردد")
+            return {"error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم", "status": 'AP', "code": "ServiceUnavailable"}
+
+        return {"error": "خطا در آپلود فایل", "status": 'E'}
 
 def start_convert_audio_to_text(file_token):
     url = "https://www.eboo.ir/api/ocr/getway"
