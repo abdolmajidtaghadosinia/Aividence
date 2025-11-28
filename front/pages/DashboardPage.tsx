@@ -238,7 +238,7 @@ const DashboardPage: React.FC = () => {
                     <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                     <div>
                         <h3 className="text-sm font-semibold text-indigo-800">
-                            {stats.processing} فایل صوتی در حال پردازش هوشمند
+                            {toPersianDigits(stats.processing)} فایل صوتی در حال پردازش هوشمند
                         </h3>
                         <p className="text-sm text-indigo-600">فایل‌های شما در حال پردازش هوشمند هستند. لطفاً صبر کنید...</p>
                     </div>

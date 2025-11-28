@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useClickOutside } from '../hooks/useClickOutside';
 import { useFiles } from '../contexts/FileContext';
 import { FileStatus } from '../types';
+import { toPersianDigits } from '../constants';
 import { UserIcon, LogoutIcon, ChevronDownIcon, BellIcon, SearchIcon, UploadIcon, LockIcon } from './Icons';
 import LogoutModal from './LogoutModal';
 import Logo from './Logo';
@@ -131,9 +132,9 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                             />
                         </div>
                         <div className="flex flex-wrap gap-2">
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-amber-800 shadow-sm border border-amber-100 pulse-chip animate-card" style={{ animationDelay: '60ms' }}>{processingCount} در حال پردازش</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-sm border border-emerald-100 pulse-chip animate-card" style={{ animationDelay: '120ms' }}>{approvedCount} تایید شده</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-indigo-700 shadow-sm border border-indigo-100 pulse-chip animate-card" style={{ animationDelay: '180ms' }}>{totalFiles} فایل</div>
+                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-amber-800 shadow-sm border border-amber-100 pulse-chip animate-card" style={{ animationDelay: '60ms' }}>{toPersianDigits(processingCount)} در حال پردازش</div>
+                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-emerald-700 shadow-sm border border-emerald-100 pulse-chip animate-card" style={{ animationDelay: '120ms' }}>{toPersianDigits(approvedCount)} تایید شده</div>
+                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-indigo-700 shadow-sm border border-indigo-100 pulse-chip animate-card" style={{ animationDelay: '180ms' }}>{toPersianDigits(totalFiles)} فایل</div>
                         </div>
                         <button
                             onClick={() => navigate('/upload')}
@@ -148,36 +149,27 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs text-slate-600">
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-rose-500 font-semibold">در حال پردازش</span>
-                            <span className="text-slate-900 font-bold text-base">{processingCount}</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(processingCount)}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-indigo-500 font-semibold">در صف</span>
-                            <span className="text-slate-900 font-bold text-base">{processingCount}</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(processingCount)}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-teal-500 font-semibold">فایل موفق</span>
-                            <span className="text-slate-900 font-bold text-base">{approvedCount}</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(approvedCount)}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-fuchsia-500 font-semibold">فایل رد شده</span>
-                            <span className="text-slate-900 font-bold text-base">{rejectedCount}</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(rejectedCount)}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-amber-600 font-semibold">کل فایل</span>
-                            <span className="text-slate-900 font-bold text-base">{totalFiles}</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(totalFiles)}</span>
                         </div>
                         <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/70">
                             <span className="text-[11px] text-slate-500 font-semibold">فایل امروز</span>
-                            <span className="text-slate-900 font-bold text-base">{totalFiles}</span>
-                        </div>
-                    </div>
-                    <div className="relative isolate overflow-hidden rounded-2xl border border-white/60 bg-white/70 px-4 py-3 shadow-inner">
-                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-indigo-100/60 via-white/40 to-emerald-100/55 blur-2xl" />
-                        <div className="relative flex flex-wrap items-center gap-3 text-xs text-slate-600">
-                            <span className="rounded-full bg-indigo-500/10 text-indigo-700 px-3 py-1 font-semibold border border-indigo-100">پیشرفت مستمر</span>
-                            <span className="rounded-full bg-emerald-500/10 text-emerald-700 px-3 py-1 font-semibold border border-emerald-100">ظرافت بصری</span>
-                            <span className="rounded-full bg-amber-500/10 text-amber-700 px-3 py-1 font-semibold border border-amber-100">تجربه بهتر</span>
-                            <span className="rounded-full bg-fuchsia-500/10 text-fuchsia-700 px-3 py-1 font-semibold border border-fuchsia-100">رابط خلاقانه</span>
+                            <span className="text-slate-900 font-bold text-base">{toPersianDigits(totalFiles)}</span>
                         </div>
                     </div>
                 </div>

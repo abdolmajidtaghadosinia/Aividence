@@ -104,29 +104,32 @@ const DictionaryPage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+        <div className="space-y-6 animate-page">
+            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden animate-card">
+                <div className="pointer-events-none absolute -left-10 -top-8 h-28 w-28 bg-emerald-200/50 blur-3xl animate-breath" />
+                <div className="pointer-events-none absolute -right-14 -bottom-10 h-32 w-32 bg-purple-200/45 blur-3xl animate-breath" />
                 <div>
                     <p className="text-sm text-slate-500">کتابخانه عبارات</p>
                     <h2 className="text-2xl font-black text-slate-900">اصطلاحات کلیدی سازمان را مدیریت کنید</h2>
                     <p className="text-slate-500 mt-2">جستجو، فیلتر و افزودن عبارات جدید با یک تجربه بصری تازه.</p>
                     <div className="card-divider my-3" />
                     <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-700 font-semibold">همگام با تیم</span>
-                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-700 font-semibold">به روز</span>
-                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-700 font-semibold">دسترسی سریع</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-700 font-semibold animate-soft-pop" style={{ animationDelay: '40ms' }}>همگام با تیم</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-700 font-semibold animate-soft-pop" style={{ animationDelay: '80ms' }}>به روز</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-700 font-semibold animate-soft-pop" style={{ animationDelay: '120ms' }}>دسترسی سریع</span>
                     </div>
                 </div>
                 <button
                     onClick={() => setAddFormVisible(true)}
-                    className="pill-button flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold hover:shadow-xl transition"
+                    className="pill-button flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold hover:shadow-xl transition animate-soft-pop"
+                    style={{ animationDelay: '160ms' }}
                 >
                     <PlusIcon className="w-5 h-5" />
                     <span>افزودن عبارت جدید</span>
                 </button>
             </div>
 
-            <div className="glass-panel rounded-3xl p-6">
+            <div className="glass-panel rounded-3xl p-6 animate-soft-pop">
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="relative flex-grow">
                         <input
