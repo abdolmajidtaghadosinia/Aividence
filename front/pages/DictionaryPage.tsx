@@ -105,9 +105,9 @@ const DictionaryPage: React.FC = () => {
 
     return (
         <div className="space-y-6 animate-page">
-            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden animate-card">
-                <div className="pointer-events-none absolute -left-10 -top-8 h-28 w-28 bg-emerald-200/50 blur-3xl animate-breath" />
-                <div className="pointer-events-none absolute -right-14 -bottom-10 h-32 w-32 bg-purple-200/45 blur-3xl animate-breath" />
+            <div className="neo-widget rounded-[30px] p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden animate-card">
+                <div className="pointer-events-none absolute -left-10 -top-8 h-32 w-32 bg-gradient-to-br from-[#f0e7ff] via-[#e6f1ff] to-[#ffe8d6] blur-[90px] animate-breath" />
+                <div className="pointer-events-none absolute -right-14 -bottom-10 h-36 w-36 bg-gradient-to-br from-[#ffe3c5] via-[#f2eaff] to-[#e8f4ff] blur-[90px] animate-breath" />
                 <div>
                     <p className="text-sm text-slate-500">کتابخانه عبارات</p>
                     <h2 className="text-2xl font-black text-slate-900">اصطلاحات کلیدی سازمان را مدیریت کنید</h2>
@@ -129,13 +129,13 @@ const DictionaryPage: React.FC = () => {
                 </button>
             </div>
 
-            <div className="glass-panel rounded-3xl p-6 animate-soft-pop">
+            <div className="neo-panel rounded-[28px] p-6 animate-soft-pop">
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="relative flex-grow">
                         <input
                             type="text"
                             placeholder="جستجو بر اساس نام عبارت..."
-                            className="w-full pl-10 pr-4 py-3 border border-white/70 rounded-xl bg-white/80 focus:ring-indigo-500 focus:border-indigo-300"
+                            className="w-full pl-10 pr-4 py-3 border border-white/70 rounded-xl bg-white/85 focus:ring-[#c5d3ff] focus:border-[#6c5dd3]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -146,7 +146,7 @@ const DictionaryPage: React.FC = () => {
                             <FolderIcon className="w-5 h-5" />
                         </div>
                         <select
-                            className="w-full appearance-none bg-white border border-indigo-100 text-gray-700 py-2 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            className="w-full appearance-none bg-white border border-indigo-100 text-gray-700 py-2 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c5d3ff]"
                             value={subCollectionFilter}
                             onChange={(e) => setSubCollectionFilter(e.target.value)}
                         >
@@ -170,12 +170,12 @@ const DictionaryPage: React.FC = () => {
                                 placeholder="عبارت"
                                 value={newTerm}
                                 onChange={(e) => setNewTerm(e.target.value)}
-                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl focus:ring-indigo-400 focus:border-indigo-300"
+                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl focus:ring-[#c5d3ff] focus:border-[#6c5dd3]"
                             />
                             <select
                                 value={newSubCollection}
                                 onChange={(e) => setNewSubCollection(e.target.value)}
-                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl bg-white focus:ring-indigo-400 focus:border-indigo-300"
+                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl bg-white focus:ring-[#c5d3ff] focus:border-[#6c5dd3]"
                             >
                                 <option value="">انتخاب زیرمجموعه</option>
                                 {[...new Set(terms.map(t => t.subset))].map(sc => (
@@ -187,7 +187,7 @@ const DictionaryPage: React.FC = () => {
                             placeholder="توضیحات"
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
-                            className="w-full mt-4 px-4 py-2 border border-indigo-100 rounded-xl focus:ring-indigo-400 focus:border-indigo-300"
+                            className="w-full mt-4 px-4 py-2 border border-indigo-100 rounded-xl focus:ring-[#c5d3ff] focus:border-[#6c5dd3]"
                             rows={3}
                         />
                         {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}

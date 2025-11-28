@@ -60,16 +60,16 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
 
     return (
         <>
-            <header className="relative overflow-hidden rounded-[32px] border border-white/70 bg-gradient-to-br from-sky-50 via-white to-indigo-50 shadow-2xl animate-soft-pop backdrop-blur-md">
+            <header className="relative overflow-hidden rounded-[32px] neo-widget border border-white/80 animate-soft-pop backdrop-blur-md">
                 <div className="pointer-events-none absolute inset-0">
-                    <div className="absolute -left-14 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-indigo-200/55 to-sky-200/35 blur-3xl animate-breath" />
-                    <div className="absolute right-4 top-6 h-28 w-28 rounded-full bg-gradient-to-br from-amber-100/70 via-white/60 to-orange-100/60 blur-2xl animate-pulse-slow" />
-                    <div className="absolute bottom-[-24%] left-1/4 h-48 w-48 rounded-full bg-gradient-to-br from-emerald-100/70 via-cyan-100/60 to-sky-100/60 blur-3xl animate-breath" />
-                    <div className="absolute inset-x-8 top-0 h-20 bg-gradient-to-r from-indigo-200/25 via-white/0 to-cyan-200/20 blur-3xl" />
-                    <div className="absolute right-10 top-14 h-16 w-16 rounded-full border border-white/60 bg-white/30 blur-md shadow-inner" />
+                    <div className="absolute -left-10 -top-14 h-44 w-44 rounded-full bg-gradient-to-br from-[#e9e2ff] via-[#d8ecff] to-[#fff2f5] blur-[100px] animate-breath" />
+                    <div className="absolute right-6 top-6 h-32 w-32 rounded-full bg-gradient-to-br from-[#ffe4c7]/80 via-white/70 to-[#f2eaff]/80 blur-2xl animate-pulse-slow" />
+                    <div className="absolute bottom-[-26%] left-1/3 h-56 w-56 rounded-full bg-gradient-to-br from-[#d6e7ff]/80 via-[#f4eaff]/80 to-[#ffeef5]/70 blur-[115px] animate-breath" />
+                    <div className="absolute inset-x-10 top-1 h-16 bg-gradient-to-r from-[#cbd6ff]/35 via-white/0 to-[#c5e9ff]/30 blur-3xl" />
+                    <div className="absolute right-10 top-14 h-16 w-16 rounded-full border border-white/60 bg-white/40 blur-md shadow-inner" />
                 </div>
 
-                <div className="relative px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+                <div className="relative px-4 sm:px-6 lg:px-8 py-6 space-y-5">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-center gap-3 sm:gap-4 animate-card" style={{ animationDelay: '80ms' }}>
                             <div className="relative flex h-14 w-14 items-center justify-center rounded-3xl bg-white/90 shadow-inner ring-1 ring-white/80 hover-lift">
@@ -120,13 +120,13 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
 
                     <div className="flex flex-wrap items-center gap-3">
                         <div className="relative flex-1 min-w-[260px]">
-                            <div className="absolute left-3 top-2.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/90 text-indigo-500 shadow-sm border border-white/80">
+                            <div className="absolute left-3 top-2.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-white/90 via-[#f1edff]/80 to-white/90 text-indigo-600 shadow-sm border border-white/80">
                                 <SearchIcon className="w-5 h-5" />
                             </div>
                             <input
                                 type="text"
                                 placeholder="جستجو در فایل‌های صوتی، پروژه‌ها یا عبارات..."
-                                className="w-full pl-14 pr-4 py-3.5 rounded-[18px] border border-white/70 bg-white/90 shadow-inner focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 text-slate-700 placeholder:text-slate-400"
+                                className="w-full pl-14 pr-4 py-3.5 rounded-[18px] border border-white/70 bg-gradient-to-br from-white/95 via-[#f7f5ff]/80 to-white shadow-inner focus:ring-2 focus:ring-[#c5d3ff] focus:border-[#6c5dd3] text-slate-700 placeholder:text-slate-400"
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />

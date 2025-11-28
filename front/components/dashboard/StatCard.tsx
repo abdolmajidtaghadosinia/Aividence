@@ -13,12 +13,12 @@ interface StatCardProps {
 }
 
 const THEMES: Record<string, { bg: string; text: string; icon: React.ReactElement; accent: string }> = {
-    orange: { bg: 'from-amber-100 via-orange-50 to-white', text: 'text-amber-600', icon: <UsersIcon />, accent: 'bg-orange-400' },
-    yellow: { bg: 'from-yellow-100 via-amber-50 to-white', text: 'text-amber-600', icon: <ClockIcon />, accent: 'bg-amber-400' },
-    blue: { bg: 'from-sky-100 via-blue-50 to-white', text: 'text-sky-600', icon: <ProcessingIcon />, accent: 'bg-sky-500' },
-    green: { bg: 'from-emerald-100 via-green-50 to-white', text: 'text-emerald-600', icon: <CheckIcon />, accent: 'bg-emerald-500' },
-    gray: { bg: 'from-slate-100 via-slate-50 to-white', text: 'text-slate-600', icon: <ClockIcon />, accent: 'bg-slate-400' },
-    purple: { bg: 'from-purple-100 via-indigo-50 to-white', text: 'text-purple-600', icon: <ProcessingIcon />, accent: 'bg-purple-500' },
+    orange: { bg: 'from-[#fff2e4] via-white to-[#ffe9d6]', text: 'text-[#ff9f5a]', icon: <UsersIcon />, accent: 'bg-[#ffb87d]' },
+    yellow: { bg: 'from-[#fff6e2] via-white to-[#ffecc7]', text: 'text-[#f3b14b]', icon: <ClockIcon />, accent: 'bg-[#f7c86a]' },
+    blue: { bg: 'from-[#e8f2ff] via-white to-[#edf5ff]', text: 'text-[#5aa0ff]', icon: <ProcessingIcon />, accent: 'bg-[#7abbff]' },
+    green: { bg: 'from-[#e9fff6] via-white to-[#ddf7ec]', text: 'text-[#2f9b70]', icon: <CheckIcon />, accent: 'bg-[#6cd4a3]' },
+    gray: { bg: 'from-[#f5f7fb] via-white to-[#eef1f7]', text: 'text-[#6b7280]', icon: <ClockIcon />, accent: 'bg-[#cdd4e2]' },
+    purple: { bg: 'from-[#efe9ff] via-white to-[#f4edff]', text: 'text-[#6c5dd3]', icon: <ProcessingIcon />, accent: 'bg-[#8b78ff]' },
 };
 
 const StatCard: React.FC<StatCardProps> = ({ title, count, colorTheme, status, onFilterClick, isActive }) => {
@@ -28,21 +28,21 @@ const StatCard: React.FC<StatCardProps> = ({ title, count, colorTheme, status, o
 
     return (
         <div
-            className={`relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br ${theme.bg} shadow-lg shadow-slate-200/60 transition-all duration-200 cursor-pointer border border-white/70 ${isActive ? 'ring-2 ring-offset-2 ring-indigo-400' : ''} animate-card hover-lift`}
+            className={`relative overflow-hidden p-5 rounded-[22px] bg-gradient-to-br ${theme.bg} shadow-lg shadow-slate-200/60 transition-all duration-200 cursor-pointer border border-white/70 ${isActive ? 'ring-2 ring-offset-2 ring-[#6c5dd3]' : ''} animate-card hover-lift`}
             onClick={() => onFilterClick(status)}
             role="button"
             tabIndex={0}
             onKeyPress={(e) => (e.key === 'Enter' || e.key === ' ') && onFilterClick(status)}
         >
             <div className="flex items-center justify-between relative z-10">
-                <div className="p-2.5 rounded-xl bg-white/70 border border-white/70 shadow-inner">
+                <div className="p-2.5 rounded-xl bg-white/80 border border-white/70 shadow-inner">
                     {icon}
                 </div>
                 <p className="font-semibold text-slate-700 text-base text-left">{title}</p>
             </div>
             <div className="mt-4 flex items-center justify-between relative z-10">
                 <p className={`text-4xl font-extrabold ${theme.text}`}>{toPersianDigits(count)}</p>
-                <span className="text-xs font-semibold text-slate-500 bg-white/70 px-3 py-1 rounded-full border border-white/80">کلیک برای فیلتر</span>
+                <span className="text-xs font-semibold text-slate-500 bg-white/75 px-3 py-1 rounded-full border border-white/80">کلیک برای فیلتر</span>
             </div>
             <div className="mt-4 h-2 rounded-full bg-white/70 overflow-hidden">
                 <div className={`h-full ${theme.accent} rounded-full`} style={{ width: `${accentWidth}%` }}></div>
