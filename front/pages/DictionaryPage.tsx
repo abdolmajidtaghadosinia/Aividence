@@ -104,35 +104,38 @@ const DictionaryPage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="soft-card rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg">
+        <div className="space-y-6 animate-page">
+            <div className="neo-widget rounded-[30px] p-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden animate-card text-slate-50">
+                <div className="pointer-events-none absolute -left-10 -top-8 h-32 w-32 bg-gradient-to-br from-[#1b2b47]/70 via-[#233556]/60 to-[#0f172a]/70 blur-[90px] animate-breath" />
+                <div className="pointer-events-none absolute -right-14 -bottom-10 h-36 w-36 bg-gradient-to-br from-[#0ea5e9]/18 via-[#f59e0b]/18 to-[#6366f1]/16 blur-[100px] animate-breath" />
                 <div>
-                    <p className="text-sm text-slate-500">کتابخانه عبارات</p>
-                    <h2 className="text-2xl font-black text-slate-900">اصطلاحات کلیدی سازمان را مدیریت کنید</h2>
-                    <p className="text-slate-500 mt-2">جستجو، فیلتر و افزودن عبارات جدید با یک تجربه بصری تازه.</p>
+                    <p className="text-sm text-slate-300">کتابخانه عبارات</p>
+                    <h2 className="text-2xl font-black text-white">اصطلاحات کلیدی سازمان را مدیریت کنید</h2>
+                    <p className="text-slate-300 mt-2">جستجو، فیلتر و افزودن عبارات جدید با یک تجربه بصری تازه.</p>
                     <div className="card-divider my-3" />
                     <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-700 font-semibold">همگام با تیم</span>
-                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-700 font-semibold">به روز</span>
-                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-700 font-semibold">دسترسی سریع</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-indigo-100 font-semibold animate-soft-pop" style={{ animationDelay: '40ms' }}>همگام با تیم</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-emerald-100 font-semibold animate-soft-pop" style={{ animationDelay: '80ms' }}>به روز</span>
+                        <span className="frosted-chip px-3 py-1 rounded-full text-amber-100 font-semibold animate-soft-pop" style={{ animationDelay: '120ms' }}>دسترسی سریع</span>
                     </div>
                 </div>
                 <button
                     onClick={() => setAddFormVisible(true)}
-                    className="pill-button flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold hover:shadow-xl transition"
+                    className="pill-button flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-bold hover:shadow-xl transition animate-soft-pop"
+                    style={{ animationDelay: '160ms' }}
                 >
                     <PlusIcon className="w-5 h-5" />
                     <span>افزودن عبارت جدید</span>
                 </button>
             </div>
 
-            <div className="glass-panel rounded-3xl p-6">
+            <div className="neo-panel rounded-[28px] p-6 animate-soft-pop">
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="relative flex-grow">
                         <input
                             type="text"
                             placeholder="جستجو بر اساس نام عبارت..."
-                            className="w-full pl-10 pr-4 py-3 border border-white/70 rounded-xl bg-white/80 focus:ring-indigo-500 focus:border-indigo-300"
+                            className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl bg-white/90 focus:ring-[#4b5f95] focus:border-[#4b5f95]"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -143,7 +146,7 @@ const DictionaryPage: React.FC = () => {
                             <FolderIcon className="w-5 h-5" />
                         </div>
                         <select
-                            className="w-full appearance-none bg-white border border-indigo-100 text-gray-700 py-2 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            className="w-full appearance-none bg-white border border-slate-200 text-gray-700 py-2 pl-10 pr-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4b5f95]"
                             value={subCollectionFilter}
                             onChange={(e) => setSubCollectionFilter(e.target.value)}
                         >
@@ -167,12 +170,12 @@ const DictionaryPage: React.FC = () => {
                                 placeholder="عبارت"
                                 value={newTerm}
                                 onChange={(e) => setNewTerm(e.target.value)}
-                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl focus:ring-indigo-400 focus:border-indigo-300"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95]"
                             />
                             <select
                                 value={newSubCollection}
                                 onChange={(e) => setNewSubCollection(e.target.value)}
-                                className="w-full px-4 py-2 border border-indigo-100 rounded-xl bg-white focus:ring-indigo-400 focus:border-indigo-300"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:ring-[#4b5f95] focus:border-[#4b5f95]"
                             >
                                 <option value="">انتخاب زیرمجموعه</option>
                                 {[...new Set(terms.map(t => t.subset))].map(sc => (
@@ -184,7 +187,7 @@ const DictionaryPage: React.FC = () => {
                             placeholder="توضیحات"
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
-                            className="w-full mt-4 px-4 py-2 border border-indigo-100 rounded-xl focus:ring-indigo-400 focus:border-indigo-300"
+                            className="w-full mt-4 px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95]"
                             rows={3}
                         />
                         {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}

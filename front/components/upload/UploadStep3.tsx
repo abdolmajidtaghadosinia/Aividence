@@ -3,6 +3,7 @@ import { updateAudioStatus } from '../../api/api';
 import { FileData } from '../../types';
 import FullScreenEditModal from './FullScreenEditModal';
 import { TagIcon, EditIcon, CheckIcon, ArrowRightIcon, ClipboardListIcon } from '../Icons';
+import StructuredTextPreview from '../StructuredTextPreview';
 
 interface UploadStep3Props {
     onBack: () => void;
@@ -33,17 +34,6 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
         }
     };
 
-    const formatAsMeetingMinutes = (text: string) => {
-        return (
-            <div>
-                <h3 className="text-lg font-bold mb-2">صورتجلسه</h3>
-                <p className="text-gray-600 mb-1"><strong>موضوع:</strong> {data.name}</p>
-                <p className="text-gray-600 mb-4"><strong>تاریخ:</strong> {new Intl.DateTimeFormat('fa-IR').format(new Date())}</p>
-                <div className="whitespace-pre-wrap">{text}</div>
-            </div>
-        );
-    };
-
     return (
          <div className="flex-1 p-2">
              <h3 className="font-bold text-lg mb-6 text-center">بازبینی و تایید نهایی</h3>
@@ -71,7 +61,12 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
                  <div className="w-full md:w-2/3">
                       <h4 className="font-semibold text-gray-800 mb-4">متن نهایی</h4>
                       <div className="bg-gray-50 p-4 rounded-lg border h-64 overflow-y-auto text-gray-700 leading-relaxed">
-                          {formatAsMeetingMinutes(editedText || data.originalText || '')}
+                          <StructuredTextPreview
+                              text={editedText || data.originalText || ''}
+                              title={data.type || 'متن نهایی'}
+                              subject={data.name}
+                              dateValue={data.uploadDate}
+                          />
                       </div>
                       <div className="mt-4">
                         <button onClick={() => setIsEditModalOpen(true)} className="text-sky-600 font-semibold hover:underline flex items-center gap-2">

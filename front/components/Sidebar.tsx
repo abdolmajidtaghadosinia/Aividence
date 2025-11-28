@@ -15,28 +15,28 @@ const Sidebar: React.FC = () => {
             label: 'داشبورد',
             description: 'مرور سریع وضعیت سامانه',
             icon: <DashboardIcon className="w-6 h-6" />,
-            gradient: 'from-indigo-500 via-sky-500 to-cyan-400',
+            gradient: 'from-[#4b5f95] via-[#3c4f7f] to-[#1f2a44]',
         },
         {
             to: '/upload',
             label: 'بارگذاری صوت',
             description: 'ارسال فایل جدید به صف',
             icon: <UploadIcon className="w-6 h-6" />,
-            gradient: 'from-amber-400 via-orange-400 to-pink-400',
+            gradient: 'from-[#f59e0b] via-[#ef9f64] to-[#c2410c]',
         },
         {
             to: '/dictionary',
             label: 'دیکشنری',
             description: 'مدیریت واژه‌های کلیدی',
             icon: <DictionaryIcon className="w-6 h-6" />,
-            gradient: 'from-emerald-500 via-teal-500 to-cyan-500',
+            gradient: 'from-[#2dd4bf] via-[#14b8a6] to-[#0f766e]',
         },
         {
             to: undefined,
             label: 'دستیار هوشمند',
             description: 'به زودی فعال می‌شود',
             icon: <AssistantIcon className="w-6 h-6" />,
-            gradient: 'from-violet-500 via-purple-500 to-indigo-500',
+            gradient: 'from-[#7c83ff] via-[#6366f1] to-[#35477d]',
             disabled: true,
         },
     ];
@@ -49,10 +49,10 @@ const Sidebar: React.FC = () => {
      */
     const getNavLinkClass = (isActive: boolean) => {
         const baseClass =
-            'group flex items-center gap-x-3 px-4 py-3 rounded-2xl transition-all duration-200 border backdrop-blur-sm shadow-sm';
+            'group flex items-center gap-x-4 px-5 py-4 rounded-[22px] transition-all duration-200 border backdrop-blur-sm shadow-sm text-base';
         return isActive
-            ? `${baseClass} bg-gradient-to-l from-indigo-500/90 via-sky-500/90 to-cyan-500/90 text-white border-transparent shadow-lg shadow-indigo-100 hover:shadow-xl hover:-translate-y-0.5`
-            : `${baseClass} bg-white/70 text-slate-700 border-white/60 hover:border-indigo-100 hover:shadow-md hover:-translate-y-0.5`;
+            ? `${baseClass} bg-gradient-to-l from-[#2c3d66] via-[#1f2f52] to-[#15233d] text-amber-50 border-amber-300/40 ring-1 ring-amber-300/30 shadow-lg shadow-indigo-800/40 hover:shadow-xl hover:-translate-y-0.5`
+            : `${baseClass} bg-slate-900/70 text-slate-100 border-slate-800 hover:border-slate-600 hover:text-white hover:shadow-md hover:-translate-y-0.5`;
     };
 
     /**
@@ -62,41 +62,40 @@ const Sidebar: React.FC = () => {
      * @param {string} gradient - Tailwind gradient classes for the badge background.
      * @returns {JSX.Element} Stylized icon capsule element.
      */
-    const renderIcon = (icon: React.ReactNode, gradient: string) => (
+    const renderIcon = (icon: React.ReactNode, gradient: string, disabled: boolean = false) => (
         <span
-            className={`shrink-0 p-3 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-100/60 flex items-center justify-center`}
+            className={`shrink-0 p-3.5 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-md shadow-indigo-900/40 flex items-center justify-center text-lg ${disabled ? 'opacity-50 grayscale' : ''}`}
         >
             {icon}
         </span>
     );
 
     return (
-        <aside className="w-72 glass-panel flex-shrink-0 flex-col hidden md:flex rounded-[28px] p-5 sticky top-6 self-start max-h-[calc(100vh-32px)]">
-            <div className="p-4 rounded-3xl bg-gradient-to-r from-indigo-50/80 via-white to-amber-50/70 border border-white/70 shadow-inner flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-white shadow flex items-center justify-center">
-                    <LogoIcon className="w-7 h-7 text-indigo-600" />
+        <aside className="w-80 max-w-[23rem] flex-shrink-0 flex-col hidden md:flex rounded-[30px] p-6 sticky top-4 lg:top-6 self-start max-h-[calc(100vh-28px)] overflow-y-auto overflow-x-hidden animate-fade-in-down bg-gradient-to-b from-[#0f172a] via-[#0e1b31] to-[#0a1326] border border-slate-800/70 shadow-[0_24px_70px_rgba(8,15,29,0.4)] text-slate-100">
+            <div className="p-5 rounded-[26px] bg-gradient-to-br from-[#111a2e] via-[#0f172a] to-[#0a1323] border border-slate-800 shadow-inner flex items-center gap-4 hover-lift">
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-[#6bc3f8] to-[#4b5f95] shadow-lg flex items-center justify-center text-white">
+                    <LogoIcon className="w-7 h-7" />
                 </div>
                 <div className="flex-1">
-                    <Logo size="sm" showText className="justify-start" />
-                    <p className="text-xs text-slate-500 mt-1">پنل مدیریت هوشمند</p>
+                    <Logo size="sm" showText className="justify-start text-white" />
+                    <p className="text-xs text-slate-400 mt-1">داشبورد پردازش صوتی</p>
                 </div>
-                <span className="px-3 py-1 rounded-full text-xs bg-emerald-50 text-emerald-600 border border-emerald-100">Online</span>
             </div>
 
-            <nav className="flex-grow py-6">
-                <p className="text-xs text-slate-400 font-semibold px-2 mb-3">بخش ها</p>
+            <nav className="flex-grow py-6 overflow-x-hidden">
+                <p className="text-sm text-slate-400 font-semibold px-2 mb-4">بخش ها</p>
                 <ul className="space-y-3">
-                    {menuItems.map((item) => (
-                        <li key={item.label}>
+                    {menuItems.map((item, index) => (
+                        <li key={item.label} style={{ animationDelay: `${index * 60}ms` }} className="animate-card">
                             {item.disabled ? (
                                 <div
                                     aria-disabled
-                                    className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/60 border border-white/70 text-slate-400 shadow-sm cursor-not-allowed"
+                                    className="flex items-center gap-3 px-4 py-3 rounded-[22px] bg-slate-900/40 border border-slate-800 text-slate-500 shadow-inner cursor-not-allowed"
                                 >
-                                    {renderIcon(item.icon, item.gradient)}
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold">{item.label}</span>
-                                        <span className="text-xs text-slate-500">{item.description}</span>
+                                    {renderIcon(item.icon, item.gradient, true)}
+                                    <div className="flex flex-col text-start">
+                                        <span className="text-base font-extrabold">{item.label}</span>
+                                        <span className="text-sm text-slate-500">{item.description}</span>
                                     </div>
                                 </div>
                             ) : (
@@ -105,10 +104,10 @@ const Sidebar: React.FC = () => {
                                         <>
                                             {renderIcon(item.icon, item.gradient)}
                                             <div className="flex flex-col text-start">
-                                                <span className={`text-sm font-bold ${isActive ? 'text-white' : 'text-slate-800'}`}>
+                                                <span className={`text-base font-extrabold ${isActive ? 'text-amber-50 drop-shadow-[0_1px_4px_rgba(255,255,255,0.45)]' : 'text-slate-100'}`}>
                                                     {item.label}
                                                 </span>
-                                                <span className={`text-xs transition-colors ${isActive ? 'text-white/90' : 'text-slate-600 group-hover:text-slate-700'}`}>
+                                                <span className={`text-sm transition-colors ${isActive ? 'text-amber-50/90' : 'text-slate-400 group-hover:text-slate-200'}`}>
                                                     {item.description}
                                                 </span>
                                             </div>

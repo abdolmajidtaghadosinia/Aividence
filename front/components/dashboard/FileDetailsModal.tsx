@@ -4,6 +4,7 @@ import { FileData } from '../../types';
 import { STATUS_STYLES } from '../../constants';
 import { XIcon } from '../Icons';
 import ModalPortal from '../ModalPortal';
+import StructuredTextPreview from '../StructuredTextPreview';
 
 interface FileDetailsModalProps {
     file: FileData;
@@ -13,8 +14,8 @@ interface FileDetailsModalProps {
 const FileDetailsModal: React.FC<FileDetailsModalProps> = ({ file, onClose }) => {
   return (
     <ModalPortal>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[85vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-page">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden max-h-[85vh] animate-soft-pop">
                 <div className="p-6 border-b flex justify-between items-center">
                     <h3 className="text-xl font-bold text-gray-800">جزئیات فایل</h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -35,9 +36,14 @@ const FileDetailsModal: React.FC<FileDetailsModalProps> = ({ file, onClose }) =>
                             {file.editedText && (
                                 <div>
                                     <h4 className="font-semibold text-gray-700 mb-2">متن نهایی تایید شده:</h4>
-                                    <p className="text-gray-600 bg-green-50 p-4 rounded-lg border border-green-100 leading-relaxed whitespace-pre-wrap">
-                                        {file.editedText}
-                                    </p>
+                                    <div className="text-gray-700 bg-green-50 p-4 rounded-lg border border-green-100 leading-relaxed">
+                                        <StructuredTextPreview
+                                            text={file.editedText}
+                                            title={file.type || 'متن نهایی'}
+                                            subject={file.name}
+                                            dateValue={file.uploadDate}
+                                        />
+                                    </div>
                                 </div>
                             )}
                             <div>

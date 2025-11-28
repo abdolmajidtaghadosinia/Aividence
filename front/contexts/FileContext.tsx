@@ -34,37 +34,37 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     'P': FileStatus.Processing,
     'Pr': FileStatus.Processing,
     'PD': FileStatus.Processed,
+    'SU': FileStatus.ServiceUnavailable,
     'A': FileStatus.Approved,
     'E': FileStatus.Rejected, // خطا را به عنوان رد شده نمایش می‌دهیم
     'R': FileStatus.Rejected,
-  };
-
-  // Format date from ISO string to Persian format
-  const formatPersianDate = (isoString: string): string => {
-    const date = new Date(isoString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    
-    // Convert to Persian calendar (approximate)
-    const persianYear = year - 621;
-    return `${persianYear}/${month}/${day}`;
   };
 
   const statusDisplay = apiFile.status_display || '';
   const mappedStatus = statusMap[apiFile.status]
     || (statusDisplay.includes('پردازش') ? FileStatus.Processing : FileStatus.Pending);
 
+  const uploadedAt = apiFile.uploaded_at;
+  const dateObject = uploadedAt ? new Date(uploadedAt) : null;
+  const formatter = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const timeFormatter = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const uploadDate = dateObject ? formatter.format(dateObject) : '';
+  const lastUpdatedLabel = dateObject ? `${formatter.format(dateObject)} • ${timeFormatter.format(dateObject)}` : '';
+
   return {
     id: apiFile.id.toString(),
     name: apiFile.file_name,
-    uploadDate: formatPersianDate(apiFile.uploaded_at),
+    uploadDate,
+    uploadedAt,
+    lastUpdatedLabel,
     type: apiFile.file_type_display,
     subCollection: apiFile.subset_title,
     status: mappedStatus,
     statusDisplay,
+    progressLabel: statusDisplay,
     task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
+    uploader: (apiFile as any).uploader || undefined,
   } as FileData;
 };
 

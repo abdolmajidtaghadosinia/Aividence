@@ -12,18 +12,17 @@ const MainLayout: React.FC = () => {
     const [headerSearchTerm, setHeaderSearchTerm] = useState('');
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden text-slate-800 floating-dots">
-            <div className="pointer-events-none absolute -top-28 -left-24 w-80 h-80 bg-sky-100 blur-3xl opacity-70" />
-            <div className="pointer-events-none absolute -bottom-28 -right-12 w-96 h-96 bg-amber-100 blur-3xl opacity-70" />
-            <div className="pointer-events-none absolute top-1/4 left-1/3 w-72 h-72 bg-indigo-100 blur-[100px] opacity-70" />
-            <div className="pointer-events-none absolute bottom-12 left-10 w-64 h-64 bg-cyan-100 blur-[90px] opacity-50" />
+        <div className="relative min-h-screen overflow-x-hidden text-slate-800 animate-page">
+            <div className="pointer-events-none absolute -top-24 -left-10 h-64 w-64 rounded-full bg-gradient-to-br from-[#15233d] via-[#1a2d4a] to-[#101a2f] blur-[100px] opacity-70" />
+            <div className="pointer-events-none absolute -bottom-32 -right-6 h-80 w-80 rounded-full bg-gradient-to-tr from-[#1b2c48] via-[#0f172a] to-[#09101f] blur-[120px] opacity-70" />
+            <div className="pointer-events-none absolute top-32 left-1/2 h-72 w-72 rounded-full bg-gradient-to-br from-[#1d2f4a] via-[#11233c] to-[#0a1426] blur-[125px] opacity-60" />
 
-            <div className="relative flex gap-5 px-4 sm:px-6 lg:px-10 py-6">
+            <div className="relative flex items-start gap-5 px-4 sm:px-6 lg:px-10 py-6 floating-dots grid-overlay">
                 <Sidebar />
                 <div className="flex-1 flex flex-col gap-5 max-w-7xl mx-auto w-full">
                     <Header searchTerm={headerSearchTerm} onSearchChange={setHeaderSearchTerm} />
                     <main className="flex-grow">
-                        <div className="glass-panel rounded-[32px] p-4 sm:p-6 lg:p-8 border border-white/70 shadow-xl shadow-indigo-50/60">
+                        <div className="neo-panel p-4 sm:p-6 lg:p-8 border border-white/70 animate-card">
                             <Outlet context={{ headerSearchTerm, setHeaderSearchTerm }} />
                         </div>
                     </main>

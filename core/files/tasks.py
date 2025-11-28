@@ -13,26 +13,43 @@ from django.conf import settings
 from files.models import Audio
 from office.models import AudioFileText
 from main.models import Prompt
+from celery import states
+
 logger = logging.getLogger(__name__)
+
+
+def raise_task_failure(task, message, progress=0):
+    """Register a Celery failure state with proper exception metadata and raise."""
+    try:
+        task.update_state(
+            state=states.FAILURE,
+            meta={
+                'exc_type': 'RuntimeError',
+                'exc_message': message,
+                'exc_module': 'builtins',
+                'progress': progress,
+                'status': message,
+            },
+        )
+    except Exception:
+        logger.debug("⚠️ ثبت وضعیت خطا در Celery ناموفق بود")
+    raise RuntimeError(message)
 
 
 def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
     url = "https://www.eboo.ir/api/ocr/getway"
     logger.info(f"🔄 شروع آپلود فایل: {audio_name} از مسیر: {audio_path}")
 
-    payload = {'command': 'addfile',
-    'token': 'dh4wReVMSttw38ps86wDj77Bteu2MkyY'}
-    
+    payload = {"command": "addfile", "token": "dh4wReVMSttw38ps86wDj77Bteu2MkyY"}
+
     if not os.path.isabs(audio_path):
-        # اگر مسیر نسبی بود، تلاش می‌کنیم از MEDIA_ROOT بسازیم
         audio_path = os.path.join(settings.MEDIA_ROOT, audio_path)
         logger.info(f"📁 مسیر نسبی تبدیل شد به: {audio_path}")
-    
+
     if not os.path.exists(audio_path):
         logger.error(f"❌ مسیر فایل یافت نشد: {audio_path}")
         return {"error": "فایل فیزیکی یافت نشد", "status": 'E'}
 
-    # بررسی حجم فایل
     file_size = os.path.getsize(audio_path)
     logger.info(f"📊 حجم فایل: {file_size / (1024*1024):.2f} مگابایت")
 
@@ -46,72 +63,79 @@ def uplouder_audio(audio_name, audio_path,  retries=3, wait=5):
     except Exception as e:
         logger.warning(f"⚠️ خطا در تشخیص نوع فایل: {e}")
 
-    try:
-        audio_file = open(audio_path, 'rb')
-        logger.info("✅ فایل با موفقیت باز شد")
-    except Exception as e:
-        logger.error(f"❌ عدم امکان باز کردن فایل برای آپلود: {e}")
-        return {"error": "عدم امکان باز کردن فایل", "status": 'E'}
-
-    files = [
-        ('filehandle', (os.path.basename(audio_name) or os.path.basename(audio_path), audio_file, mime))
-    ]
-    
     headers = {
-    'Cookie': 'XSRF-TOKEN=eyJpdiI6ImQ5MjVZc2V3RFlEeWxNbXdha1cwOUE9PSIsInZhbHVlIjoiQmhmUC9oRlh2WVN5YVYydmJvNDR6UkZjeGowVURsN20vZUJQNk9kSHJBVHlzY2V6MUpMSzR2a0dOeDlxTFdlWHRJY0xPSW0xYnpxRHRIZkF4d0xtenQ4Zk40ZVlhaUNhM2tza1ZmOWl6QTIvRVhNVzlBL0VWaWxPMnpLNlRtd0giLCJtYWMiOiIxMGY2OWIyMjZjNzY1YWY3ZmRjMzQwMGU2MTc2MmQ0N2JkYjkwMjM4YWUzYzBiNDg3NWZhNmEwMTFiMjcxZTE0IiwidGFnIjoiIn0%3D; ebooir_session=eyJpdiI6IjlsTXI1Z09uc29KY1dTdkVMMUVHV0E9PSIsInZhbHVlIjoibFlRZXNNbWZFSExDdG1aMnNYdTNpRWROd1dpWVRnQjltaDkxSkNYTlJrV0JNMEtnMTNjZTV6L3pMZDIwYU9WcGw4WTVhLzc2KzZXZDAxeGpBakRsbXRCMmxnZ1hiejV5cFc0RVp3WG14NXlwTXUxNVVXK2picUtjWjdiODVmTHkiLCJtYWMiOiIzNTgwODViNjQxMzEzN2Y5NmUzNjU1YjhkOTk2NTQzMGQ0MjM1MDY1YTg3YTUzN2RmNDQ0NTJjZTg2MzQ0ZjFmIiwidGFnIjoiIn0%3D'
+        'Cookie': 'XSRF-TOKEN=eyJpdiI6ImQ5MjVZc2V3RFlEeWxNbXdha1cwOUE9PSIsInZhbHVlIjoiQmhmUC9oRlh2WVN5YVYydmJvNDR6UkZjeGowVURsN20vZUJQNk9kSHJBVHlzY2V6MUpMSzR2a0dOeDlxTFdlWHRJY0xPSW0xYnpxRHRIZkF4d0xtenQ4Zk40ZVlhaUNhM2tza1ZmOWl6QTIvRVhNVzlBL0VWaWxPMnpLNlRtd0giLCJtYWMiOiIxMGY2OWIyMjZjNzY1YWY3ZmRjMzQwMGU2MTc2MmQ0N2JkYjkwMjM4YWUzYzBiNDg3NWZhNmEwMTFiMjcxZTE0IiwidGFnIjoiIn0%3D; ebooir_session=eyJpdiI6IjlsTXI1Z09uc29KY1dTdkVMMUVHV0E9PSIsInZhbHVlIjoibFlRZXNNbWZFSExDdG1aMnNYdTNpRWROd1dpWVRnQjltaDkxSkNYTlJrV0JNMEtnMTNjZTV6L3pMZDIwYU9WcGw4WTVhLzc2KzZXZDAxeGpBakRsbXRCMmxnZ1hiejV5cFc0RVp3WG14NXlwTXUxNVVXK2picUtjWjdiODVmTHkiLCJtYWMiOiIzNTgwODViNjQxMzEzN2Y5NmUzNjU1YjhkOTk2NTQzMGQ0MjM1MDY1YTg3YTUzN2RmNDQ0NTJjZTg2MzQ0ZjFmIiwidGFnIjoiIn0%3D'
     }
 
     logger.info(f"🌐 ارسال درخواست به: {url}")
     logger.info(f"📦 Payload: {payload}")
     logger.info(f"🍪 Headers: {list(headers.keys())}")
 
-    try:
-        response = requests.request("POST", url, headers=headers, data=payload, files=files, timeout=60)
-        logger.info(f"📡 پاسخ دریافت شد - کد وضعیت: {response.status_code}")
-    except requests.RequestException as e:
-        logger.error(f"❌ اشکال شبکه در آپلود: {e}")
-        return {"error": "اشکال شبکه در آپلود", "status": 'E'}
-    finally:
+    for attempt in range(retries):
         try:
-            audio_file.close()
-            logger.info("🔒 فایل بسته شد")
-        except Exception as e:
-            logger.warning(f"⚠️ خطا در بستن فایل: {e}")
+            with open(audio_path, 'rb') as audio_file:
+                logger.info("✅ فایل با موفقیت باز شد")
+                files = [
+                    ('filehandle', (os.path.basename(audio_name) or os.path.basename(audio_path), audio_file, mime))
+                ]
 
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            logger.info(f"📄 پاسخ JSON: {data}")
+                response = requests.request("POST", url, headers=headers, data=payload, files=files, timeout=60)
+                logger.info(f"📡 پاسخ دریافت شد - کد وضعیت: {response.status_code}")
         except Exception as e:
-            logger.error(f"❌ خطا در پارس کردن JSON: {e}")
-            logger.error(f"📄 محتوای خام پاسخ: {response.text[:500]}")
-            return {"error": "پاسخ نامعتبر از سرور", "status": 'E'}
-            
-        if data.get("Status") == "Done":
-            result = data.get("FileToken")
-            if result:
-                logger.info(f"✅ فایل با موفقیت آپلود شد - FileToken: {result}")
-                return result
-            else:
+            logger.error(f"❌ اشکال شبکه یا فایل در آپلود (تلاش {attempt + 1}/{retries}): {e}")
+            if attempt < retries - 1:
+                logger.info(f"↩️ تلاش مجدد در {wait} ثانیه")
+                time.sleep(wait)
+                continue
+            return {"error": "اشکال شبکه در آپلود", "status": 'AP', "code": "TransientUploadError"}
+
+        if response.status_code == 200:
+            try:
+                data = response.json()
+                logger.info(f"📄 پاسخ JSON: {data}")
+            except Exception as e:
+                logger.error(f"❌ خطا در پارس کردن JSON: {e}")
+                logger.error(f"📄 محتوای خام پاسخ: {response.text[:500]}")
+                return {"error": "پاسخ نامعتبر از سرور", "status": 'E'}
+
+            if data.get("Status") == "Done":
+                result = data.get("FileToken")
+                if result:
+                    logger.info(f"✅ فایل با موفقیت آپلو شد - FileToken: {result}")
+                    return result
                 logger.warning("⚠️ فایل آپلود نشد - FileToken موجود نیست")
                 return {"error": "فایل آپلود نشد", "status": 'E'}
-        elif data.get("Status") == "NoEnoughCredit":
-            logger.error("❌ خطا از سرویس iotype (Status): NoEnoughCredit - اعتبار حساب کافی نیست")
-            logger.error(f"📄 کل پاسخ: {data}")
-            return {"error": "اعتبار سرویس کافی نیست", "status": 'AP', "code": "NoEnoughCredit"}
-        else:
-            logger.error(f"❌ خطا از سرویس iotype (Status): {data.get('Status')}")
-            logger.error(f"📄 کل پاسخ: {data}")
-            return {"error": "خطا در آپلود فایل", "status": 'E'}
-    else:
+            elif data.get("Status") == "NoEnoughCredit":
+                logger.error("❌ خطا از سرویس iotype (Status): NoEnoughCredit - اعتبار حساب کافی نیست")
+                logger.error(f"📄 کل پاسخ: {data}")
+                return {"error": "اعتبار سرویس کافی نیست", "status": 'AP', "code": "NoEnoughCredit"}
+            else:
+                logger.error(f"❌ خطا از سرویس iotype (Status): {data.get('Status')}")
+                logger.error(f"📄 کل پاسخ: {data}")
+                return {"error": "خطا در آپلود فایل", "status": 'E'}
+
         try:
             body = response.text[:500]
         except Exception:
             body = ''
         logger.error(f"❌ خطا از سرویس iotype (کد {response.status_code})")
         logger.error(f"📄 محتوای پاسخ: {body}")
-        return {"error": "خطا در آپلود فایل", "status": 'E'}
 
+        if 500 <= response.status_code < 600 and attempt < retries - 1:
+            logger.info(f"↩️ تلاش مجدد به دلیل خطای موقت سرور در {wait} ثانیه")
+            time.sleep(wait)
+            continue
+
+        if 500 <= response.status_code < 600:
+            logger.warning("⚠️ سرویس پردازش در دسترس نیست؛ تلاش بعدی به تعویق افتاد")
+            return {
+                "error": "سرویس پردازش در دسترس نیست، بعدا دوباره تلاش می‌کنیم",
+                "status": 'SU',
+                "code": "ServiceUnavailable",
+                "next_retry_seconds": wait,
+            }
+
+        return {"error": "خطا در آپلود فایل", "status": 'E'}
 
 def start_convert_audio_to_text(file_token):
     url = "https://www.eboo.ir/api/ocr/getway"
@@ -315,11 +339,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                         if status_flag == 'E':
                             logger.error(f"❌ خطا در تبدیل: {text}")
                             update_audio_status(audio_id, 'E')
-                            try:
-                                self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(text)})
-                            except Exception:
-                                logger.debug("⚠️ ثبت خطا در وضعیت Celery ناموفق بود")
-                            return text
+                            raise_task_failure(self, str(text))
 
                         # اگر همچنان در حال پردازش است، منتظر بمانیم
                         if status_flag == 'Pr':
@@ -345,11 +365,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                             if time.time() - start_time > max_wait_seconds:
                                 logger.error(f"⏰ تایم‌اوت - بیش از {max_wait_seconds/60:.0f} دقیقه انتظار")
                                 update_audio_status(audio_id, 'E')
-                                try:
-                                    self.update_state(state='FAILURE', meta={'progress': numeric_progress, 'status': 'تایم‌اوت در پردازش'})
-                                except Exception:
-                                    logger.debug("⚠️ ثبت تایم‌اوت در Celery ناموفق بود")
-                                return {"error": "Timeout waiting for conversion", "status": 'E'}
+                                raise_task_failure(self, 'تایم‌اوت در پردازش', numeric_progress)
 
                             logger.info("⏳ انتظار 5 ثانیه...")
                             time.sleep(5)
@@ -392,11 +408,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
             else:
                 logger.error(f"❌ خطا در شروع تبدیل: {convert_result}")
                 update_audio_status(audio_id, 'E')
-                try:
-                    self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در شروع تبدیل'})
-                except Exception:
-                    logger.debug("⚠️ ثبت خطای شروع تبدیل در Celery ناموفق بود")
-                return {"error": "خطا در شروع تبدیل گفتار به متن", "status": 'E'}
+                raise_task_failure(self, 'خطا در شروع تبدیل گفتار به متن')
         else:
             logger.error(f"❌ خطا در آپلود فایل: {file_token}")
             error_status = None
@@ -404,6 +416,30 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
             if isinstance(file_token, dict):
                 error_status = file_token.get("status")
                 error_code = file_token.get("code")
+
+                if error_code in {"ServiceUnavailable", "TransientUploadError"}:
+                    logger.warning("🚧 سرویس پردازش در دسترس نیست؛ فایل در حالت عدم دسترسی ثبت می‌شود")
+                    update_audio_status(audio_id, 'SU')
+
+                    retry_in = file_token.get("next_retry_seconds", 0)
+                    status_message = 'سرویس پردازش موقتا در دسترس نیست؛ لطفاً بعداً دوباره تلاش کنید'
+
+                    try:
+                        self.update_state(
+                            state=states.FAILURE,
+                            meta={
+                                'exc_type': 'RuntimeError',
+                                'exc_message': status_message,
+                                'exc_module': 'builtins',
+                                'progress': 0,
+                                'status': status_message,
+                                'retry_after': retry_in,
+                            }
+                        )
+                    except Exception:
+                        logger.debug("⚠️ ثبت پیام وضعیت موقت در Celery ناموفق بود")
+
+                    return {"error": status_message, "status": 'SU', "code": error_code}
 
                 # اگر اعتبار سرویس کافی نباشد، فایل را به حالت انتظار پردازش برگردانیم تا به صورت خودکار رد نشود
                 if error_code == "NoEnoughCredit" or error_status == 'AP':
@@ -416,20 +452,17 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                     return {"error": "اعتبار سرویس پردازش کافی نیست. لطفاً پس از شارژ مجدد دوباره تلاش کنید.", "status": 'AP'}
 
             update_audio_status(audio_id, 'E')
-            try:
-                self.update_state(state='FAILURE', meta={'progress': 0, 'status': 'خطا در آپلود فایل'})
-            except Exception:
-                logger.debug("⚠️ ثبت خطای آپلود در Celery ناموفق بود")
-            return {"error": "خطا در آپلود فایل", "status": 'E'}
+            raise_task_failure(self, 'خطا در آپلود فایل')
 
     except Exception as e:
         logger.error(f"❌ خطای کلی در پردازش: {str(e)}")
-        update_audio_status(audio_id, 'E')
         try:
-            self.update_state(state='FAILURE', meta={'progress': 0, 'status': str(e)})
+            audio = Audio.objects.get(id=audio_id)
+            if audio.status != 'SU':
+                update_audio_status(audio_id, 'E')
         except Exception:
-            logger.debug("⚠️ ثبت خطای کلی در Celery ناموفق بود")
-        return {"error": str(e), "status": 'E'}
+            update_audio_status(audio_id, 'E')
+        raise_task_failure(self, str(e))
 
     return {"success": True, "audio_id": audio_id, "status": 'P'}
 
@@ -536,6 +569,10 @@ def check_processing_status(audio_id):
                 print(f"✅ وضعیت فایل {audio_id} به 'تایید شده' تغییر یافت")
             return 'A'  # تایید شده
         else:
+            # اگر رکورد وجود ندارد و خطا یا عدم دسترسی ثبت شده، همان وضعیت حفظ شود
+            if audio.status in {'E', 'R', 'SU'}:
+                return audio.status
+
             # اگر رکورد وجود ندارد، وضعیت باید "در حال پردازش" باشد
             if audio.status != 'P':
                 audio.status = 'P'

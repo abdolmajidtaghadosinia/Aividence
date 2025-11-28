@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_FILES } from '../../constants';
+import { MOCK_FILES, toPersianDigits } from '../../constants';
 import { ArrowRightIcon, ProcessingIcon, InfoIcon, FileTypeIcon, FolderIcon } from '../Icons';
 import { FileData } from '../../types';
 import { getUploadFormData, UploadFormData, submitUploadForm } from '../../api/api';
@@ -18,6 +18,8 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+
+    const formatSizeMb = (bytes: number) => toPersianDigits((bytes / (1024 * 1024)).toFixed(1));
 
     useEffect(() => {
         const fetchFormData = async () => {
@@ -58,7 +60,7 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
             const maxSize = 10 * 1024 * 1024; // 10MB
             
             if (droppedFile.size > maxSize) {
-                setError(`حجم فایل صوتی باید کمتر از ۱۰ مگابایت باشد. حجم فایل صوتی انتخاب شده: ${(droppedFile.size / (1024 * 1024)).toFixed(1)} مگابایت`);
+                setError(`حجم فایل صوتی باید کمتر از ۱۰ مگابایت باشد. حجم فایل صوتی انتخاب شده: ${formatSizeMb(droppedFile.size)} مگابایت`);
                 return;
             }
             
@@ -74,7 +76,7 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
             const maxSize = 10 * 1024 * 1024; // 10MB
             
             if (selectedFile.size > maxSize) {
-                setError(`حجم فایل صوتی باید کمتر از ۱۰ مگابایت باشد. حجم فایل صوتی انتخاب شده: ${(selectedFile.size / (1024 * 1024)).toFixed(1)} مگابایت`);
+                setError(`حجم فایل صوتی باید کمتر از ۱۰ مگابایت باشد. حجم فایل صوتی انتخاب شده: ${formatSizeMb(selectedFile.size)} مگابایت`);
                 return;
             }
             

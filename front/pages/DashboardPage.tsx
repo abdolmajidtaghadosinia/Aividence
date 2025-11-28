@@ -4,7 +4,7 @@ import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
 import { EyeIcon, DownloadIcon, ProcessingIcon, CheckIcon, TrashIcon, StopIcon } from '../components/Icons';
-import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile } from '../api/api';
+import { exportCustomContentZip, getAudioTextByUuid, deleteAudioFile, reprocessAudio } from '../api/api';
 import StatCard from '../components/dashboard/StatCard';
 import FileDetailsModal from '../components/dashboard/FileDetailsModal';
 import StatusChart from '../components/dashboard/StatusChart';
@@ -21,6 +21,7 @@ const DashboardPage: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; file: FileData } | null>(null);
     const [isActing, setIsActing] = useState(false);
+    const [retryingId, setRetryingId] = useState<string | null>(null);
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
@@ -52,7 +53,32 @@ const DashboardPage: React.FC = () => {
         }
     };
 
+    const handleRetryProcessing = async (file: FileData) => {
+        if (!file.upload_uuid) return;
+        setRetryingId(file.id);
+        try {
+            await reprocessAudio(file.upload_uuid);
+            await refreshFiles();
+        } catch (err) {
+            console.error('Unable to retry processing', err);
+            alert('سرویس پردازش موقتا در دسترس نیست. لطفاً کمی بعد دوباره تلاش کنید.');
+        } finally {
+            setRetryingId(null);
+        }
+    };
+
+    const toEnglishDigits = (value: string | undefined) => (value || '').replace(/[۰-۹]/g, (d) => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+
     const filteredFiles = useMemo(() => {
+        const getSortableDateValue = (file: FileData) => {
+            if (file.uploadedAt) {
+                return new Date(file.uploadedAt).getTime();
+            }
+            const normalized = file.uploadDate ? toEnglishDigits(file.uploadDate).replace(/\//g, '-') : '';
+            const parsed = normalized ? Date.parse(normalized) : 0;
+            return Number.isFinite(parsed) ? parsed : 0;
+        };
+
         return files
             .filter(file => {
                 const matchesSearch = file.name.toLowerCase().includes(headerSearchTerm.toLowerCase());
@@ -60,8 +86,8 @@ const DashboardPage: React.FC = () => {
                 return matchesSearch && matchesStatus;
             })
             .sort((a, b) => {
-                const dateA = new Date(a.uploadDate.replace(/\//g, '-')).getTime();
-                const dateB = new Date(b.uploadDate.replace(/\//g, '-')).getTime();
+                const dateA = getSortableDateValue(a);
+                const dateB = getSortableDateValue(b);
                 return dateB - dateA;
             });
     }, [files, headerSearchTerm, statusFilter]);
@@ -72,6 +98,7 @@ const DashboardPage: React.FC = () => {
         processing: files.filter(f => f.status === FileStatus.Processing).length,
         processed: files.filter(f => f.status === FileStatus.Processed).length,
         approved: files.filter(f => f.status === FileStatus.Approved).length,
+        unavailable: files.filter(f => f.status === FileStatus.ServiceUnavailable).length,
         rejected: files.filter(f => f.status === FileStatus.Rejected).length,
     }), [files]);
 
@@ -108,6 +135,40 @@ const DashboardPage: React.FC = () => {
     const completionRate = stats.total ? Math.round((stats.approved / stats.total) * 100) : 0;
 
     const activeFilterText = statusFilter === 'all' ? '' : ` (فیلتر: ${statusFilter})`;
+
+    const formatPersianDateTime = (file: FileData) => {
+        const dateObject = file.uploadedAt ? new Date(file.uploadedAt) : null;
+        if (dateObject && !isNaN(dateObject.getTime())) {
+            const dateFormatter = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const timeFormatter = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return {
+                date: dateFormatter.format(dateObject),
+                time: timeFormatter.format(dateObject),
+            };
+        }
+
+        if (file.lastUpdatedLabel) {
+            const [rawDate, rawTime] = file.lastUpdatedLabel.split('•').map((part) => part.trim());
+            return {
+                date: rawDate,
+                time: rawTime || '',
+            };
+        }
+
+        const numericDate = file.uploadDate ? toEnglishDigits(file.uploadDate) : '';
+        return {
+            date: file.uploadDate || '',
+            time: '',
+            numericDate,
+        };
+    };
+
+    const getSummaryLine = (file: FileData) => {
+        const content = file.processedText || file.editedText || file.originalText;
+        if (!content) return '';
+        const normalized = content.replace(/\s+/g, ' ').trim();
+        return normalized.length > 90 ? `${normalized.slice(0, 90)}…` : normalized;
+    };
 
     const renderStatusBadge = (status: FileStatus) => {
         const { bg, text, dot } = STATUS_STYLES[status];
@@ -184,6 +245,7 @@ const DashboardPage: React.FC = () => {
                 <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
                 <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
                 <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
+                <StatCard title="سرویس در دسترس نیست" count={stats.unavailable} colorTheme="amber" status={FileStatus.ServiceUnavailable} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.ServiceUnavailable} />
                 <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
                 <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
             </div>
@@ -193,7 +255,7 @@ const DashboardPage: React.FC = () => {
                     <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
                     <div>
                         <h3 className="text-sm font-semibold text-indigo-800">
-                            {stats.processing} فایل صوتی در حال پردازش هوشمند
+                            {toPersianDigits(stats.processing)} فایل صوتی در حال پردازش هوشمند
                         </h3>
                         <p className="text-sm text-indigo-600">فایل‌های شما در حال پردازش هوشمند هستند. لطفاً صبر کنید...</p>
                     </div>
@@ -202,7 +264,7 @@ const DashboardPage: React.FC = () => {
 
             <div className="grid xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
                             <button
@@ -241,12 +303,24 @@ const DashboardPage: React.FC = () => {
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredFiles.map((file) => (
-                                            <tr key={file.id} className="bg-white border-b hover:bg-gray-50">
-                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[150px] truncate" title={file.name}>
-                                                    {file.name}
+                                        filteredFiles.map((file, index) => {
+                                            const summary = getSummaryLine(file);
+                                            const { date, time } = formatPersianDateTime(file);
+
+                                            return (
+                                            <tr key={file.id} className="bg-white border-b hover:bg-gray-50 table-row-animate" style={{ animationDelay: `${index * 45}ms` }}>
+                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
+                                                    <div className="truncate" title={file.name}>{file.name}</div>
+                                                    <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
                                                 </td>
-                                                <td className="px-6 py-4">{file.uploadDate}</td>
+                                                <td className="px-6 py-4 align-top">
+                                                    <div className="space-y-1 text-[13px] text-slate-700">
+                                                        <div className="font-semibold">{date && toPersianDigits(date)}</div>
+                                                        {time && (
+                                                            <div className="text-xs text-slate-500">آخرین تغییر: {toPersianDigits(time)}</div>
+                                                        )}
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4 hidden md:table-cell">{file.type}</td>
                                                 <td className="px-6 py-4">
                                                     <div className="space-y-2">
@@ -269,41 +343,65 @@ const DashboardPage: React.FC = () => {
                                                                 </div>
                                                             </div>
                                                         )}
+                                                        {file.status === FileStatus.ServiceUnavailable && (
+                                                            <div className="space-y-2">
+                                                                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 leading-6">
+                                                                    سرویس پردازش در دسترس نیست. لطفاً چند دقیقه دیگر تلاش کنید.
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => handleRetryProcessing(file)}
+                                                                    className="w-full text-center text-[13px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded-xl py-2 hover:bg-amber-200 transition disabled:opacity-50"
+                                                                    disabled={retryingId === file.id}
+                                                                >
+                                                                    {retryingId === file.id ? 'در حال تلاش مجدد...' : 'تلاش دوباره برای پردازش'}
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 flex items-center gap-x-2">
-                                                    <button
-                                                        onClick={() => handleViewClick(file)}
-                                                        className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                                                        title="مشاهده جزئیات"
-                                                        disabled={file.status === FileStatus.Processing}
-                                                    >
-                                                        <EyeIcon className="w-5 h-5"/>
-                                                    </button>
-                                                    <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
-                                                        <DownloadIcon className="w-5 h-5" />
-                                                    </button>
-                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
-                                                        <button
-                                                            onClick={() => openCancelModal(file)}
-                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
-                                                            title="توقف و حذف از صف"
-                                                        >
-                                                            <StopIcon className="w-5 h-5" />
-                                                        </button>
-                                                    )}
-                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
-                                                        <button
-                                                            onClick={() => openDeleteModal(file)}
-                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
-                                                            title="حذف آیتم"
-                                                        >
-                                                            <TrashIcon className="w-5 h-5" />
-                                                        </button>
-                                                    )}
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col gap-2">
+                                                        {summary && (
+                                                            <p className="text-xs text-slate-500 max-w-[260px] truncate" title={summary}>
+                                                                {summary}
+                                                            </p>
+                                                        )}
+                                                        <div className="flex items-center gap-x-2">
+                                                            <button
+                                                                onClick={() => handleViewClick(file)}
+                                                                className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                title="مشاهده جزئیات"
+                                                                disabled={file.status === FileStatus.Processing}
+                                                            >
+                                                                <EyeIcon className="w-5 h-5"/>
+                                                            </button>
+                                                            <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
+                                                                <DownloadIcon className="w-5 h-5" />
+                                                            </button>
+                                                            {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
+                                                                <button
+                                                                    onClick={() => openCancelModal(file)}
+                                                                    className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
+                                                                    title="توقف و حذف از صف"
+                                                                >
+                                                                    <StopIcon className="w-5 h-5" />
+                                                                </button>
+                                                            )}
+                                                            {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
+                                                                <button
+                                                                    onClick={() => openDeleteModal(file)}
+                                                                    className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
+                                                                    title="حذف آیتم"
+                                                                >
+                                                                    <TrashIcon className="w-5 h-5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
-                                        ))
+                                        );
+                                        })
                                     )}
                                 </tbody>
                             </table>
@@ -378,11 +476,11 @@ const DashboardPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card" style={{ animationDelay: '120ms' }}>
                         <StatusChart stats={stats} />
                     </div>
 
-                    <div className="soft-card rounded-3xl p-6">
+                    <div className="soft-card rounded-3xl p-6 animate-card" style={{ animationDelay: '180ms' }}>
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <p className="text-sm text-slate-500">زیرمجموعه‌ها</p>
@@ -407,7 +505,7 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="glass-panel rounded-3xl p-6">
+                    <div className="glass-panel rounded-3xl p-6 animate-card" style={{ animationDelay: '240ms' }}>
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <p className="text-sm text-slate-500">ریتم آپلود</p>
