@@ -12,10 +12,11 @@ const MainLayout: React.FC = () => {
     const [headerSearchTerm, setHeaderSearchTerm] = useState('');
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden text-slate-800 animate-page">
-            <div className="pointer-events-none absolute -top-24 -left-10 h-64 w-64 rounded-full bg-gradient-to-br from-[#15233d] via-[#1a2d4a] to-[#101a2f] blur-[100px] opacity-70" />
-            <div className="pointer-events-none absolute -bottom-32 -right-6 h-80 w-80 rounded-full bg-gradient-to-tr from-[#1b2c48] via-[#0f172a] to-[#09101f] blur-[120px] opacity-70" />
-            <div className="pointer-events-none absolute top-32 left-1/2 h-72 w-72 rounded-full bg-gradient-to-br from-[#1d2f4a] via-[#11233c] to-[#0a1426] blur-[125px] opacity-60" />
+        <div className="relative min-h-screen overflow-x-hidden text-slate-100 animate-page">
+            <div className="pointer-events-none absolute -top-16 -left-10 h-72 w-72 rounded-full bg-gradient-to-br from-[#58bdf3]/60 via-[#3a64e0]/55 to-[#10244c]/55 blur-[120px] opacity-90" />
+            <div className="pointer-events-none absolute -bottom-40 -right-10 h-96 w-96 rounded-full bg-gradient-to-tr from-[#101a33]/75 via-[#0c2344]/70 to-[#0e1730]/70 blur-[140px] opacity-80" />
+            <div className="pointer-events-none absolute top-24 left-1/3 h-[22rem] w-[22rem] rounded-full bg-gradient-to-br from-[#8b5cf6]/45 via-[#14b8a6]/35 to-[#0ea5e9]/35 blur-[150px] opacity-80" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.06),transparent_35%),radial-gradient(circle_at_20%_40%,rgba(94,234,212,0.08),transparent_45%)]" />
 
             <Sidebar />
 
@@ -23,7 +24,7 @@ const MainLayout: React.FC = () => {
                 <div className="flex-1 flex flex-col gap-5 max-w-7xl mx-auto w-full">
                     <Header searchTerm={headerSearchTerm} onSearchChange={setHeaderSearchTerm} />
                     <main className="flex-grow">
-                        <div className="neo-panel p-4 sm:p-6 lg:p-8 border border-white/70 animate-card">
+                        <div className="neo-panel p-4 sm:p-6 lg:p-8 border border-white/70 animate-card shadow-[0_24px_80px_rgba(9,16,40,0.25)]">
                             <Outlet context={{ headerSearchTerm, setHeaderSearchTerm }} />
                         </div>
                     </main>

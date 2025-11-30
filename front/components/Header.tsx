@@ -60,13 +60,13 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
 
     return (
         <>
-            <header className="relative overflow-visible rounded-[32px] neo-widget animate-soft-pop backdrop-blur-xl text-slate-50">
+            <header className="relative overflow-visible rounded-[32px] neo-widget animate-soft-pop backdrop-blur-xl text-slate-50 border border-[#27407a]/60">
                 <div className="pointer-events-none absolute inset-0">
-                    <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-[#1f2f52]/60 via-[#1c2948]/50 to-[#0f172a]/40 blur-[110px] animate-breath" />
-                    <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gradient-to-br from-[#0ea5e9]/15 via-[#f59e0b]/12 to-[#7c3aed]/12 blur-[120px] animate-pulse-slow" />
-                    <div className="absolute bottom-[-26%] left-1/3 h-64 w-64 rounded-full bg-gradient-to-br from-[#1e293b]/45 via-[#0f172a]/55 to-[#020617]/40 blur-[125px] animate-breath" />
-                    <div className="absolute inset-x-6 top-1 h-12 bg-gradient-to-r from-white/8 via-white/0 to-white/8 blur-3xl" />
-                    <div className="absolute right-10 top-14 h-14 w-14 rounded-2xl border border-white/10 bg-white/5 blur-md shadow-inner" />
+                    <div className="absolute -left-16 -top-16 h-48 w-48 rounded-full bg-gradient-to-br from-[#58bdf3]/45 via-[#4f46e5]/40 to-[#10244c]/55 blur-[120px] animate-breath" />
+                    <div className="absolute right-0 top-0 h-44 w-44 rounded-full bg-gradient-to-br from-[#22d3ee]/18 via-[#93c5fd]/15 to-[#a855f7]/15 blur-[140px] animate-pulse-slow" />
+                    <div className="absolute bottom-[-26%] left-1/3 h-64 w-64 rounded-full bg-gradient-to-br from-[#0ea5e9]/40 via-[#22d3ee]/35 to-[#0b1125]/35 blur-[135px] animate-breath" />
+                    <div className="absolute inset-x-6 top-1 h-12 bg-gradient-to-r from-white/15 via-white/0 to-white/12 blur-3xl" />
+                    <div className="absolute right-10 top-14 h-14 w-14 rounded-2xl border border-white/20 bg-white/10 blur-md shadow-inner" />
                 </div>
 
                 <div className="relative px-4 sm:px-6 lg:px-8 py-6 space-y-5">
@@ -127,13 +127,13 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
 
                     <div className="flex flex-wrap items-center gap-3">
                         <div className="relative flex-1 min-w-[260px]">
-                            <div className="absolute left-3 top-2.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800/70 text-sky-300 shadow-sm border border-slate-700">
+                            <div className="absolute left-3 top-2.5 flex h-10 w-10 items-center justify-center rounded-2xl bg-[#132548]/70 text-sky-300 shadow-sm border border-sky-500/30">
                                 <SearchIcon className="w-5 h-5" />
                             </div>
                             <input
                                 type="text"
                                 placeholder="جستجو در فایل‌های صوتی، پروژه‌ها یا عبارات..."
-                                className="w-full pl-14 pr-4 py-3.5 rounded-[18px] border border-slate-700 bg-slate-900/70 text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-[#6bc3f8] focus:border-[#6bc3f8] shadow-inner"
+                                className="w-full pl-14 pr-4 py-3.5 rounded-[18px] border border-[#2f3f6c] bg-[#0f1d36]/80 text-slate-100 placeholder:text-slate-300 focus:ring-2 focus:ring-[#5ee0ff] focus:border-[#5ee0ff] shadow-inner"
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
