@@ -13,9 +13,13 @@ from .serializers import KeywordListSerializer
 try:
     from docx import Document  # python-docx
     from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 except Exception:  # pragma: no cover
     Document = None
     qn = None
+    OxmlElement = None
+    WD_PARAGRAPH_ALIGNMENT = None
 
 try:
     from reportlab.pdfgen import canvas
@@ -84,11 +88,36 @@ class ExportCustomContentZipView(APIView):
             content = audio_text.content_processed
             # return Response({'detail': 'custom_content خالی است.'}, status=400)
 
+        source_file_name = None
+        if getattr(audio_text.file, "file", None):
+            source_file_name = os.path.basename(audio_text.file.file.name or "")
+
+        base_name, _ = os.path.splitext(source_file_name or audio_text.file.name or "")
+        if not base_name:
+            base_name = f"audio_{audio_text.file_id or audio_text.id}"
+
         # In-memory DOCX
         docx_buf = io.BytesIO()
         if Document is None:
             return Response({'detail': 'python-docx نصب نیست.'}, status=500)
         document = Document()
+
+        def _apply_paragraph_rtl(paragraph):
+            """Ensure paragraphs are right-aligned and marked as RTL when supported."""
+
+            if WD_PARAGRAPH_ALIGNMENT is not None:
+                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+
+            if qn is not None and OxmlElement is not None:
+                try:
+                    pPr = paragraph._p.get_or_add_pPr()
+                    bidi = pPr.find(qn('w:bidi'))
+                    if bidi is None:
+                        bidi = OxmlElement('w:bidi')
+                        bidi.set(qn('w:val'), '1')
+                        pPr.append(bidi)
+                except Exception:
+                    pass
 
         # Set a Persian-friendly default font for better RTL rendering in Word.
         if qn is not None:
@@ -96,11 +125,14 @@ class ExportCustomContentZipView(APIView):
                 normal_style = document.styles['Normal']
                 normal_style.font.name = 'Vazirmatn'
                 normal_style._element.rPr.rFonts.set(qn('w:eastAsia'), 'Vazirmatn')
+                if WD_PARAGRAPH_ALIGNMENT is not None:
+                    normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
             except Exception:
                 pass
 
         for line in content.splitlines() or ['']:
-            document.add_paragraph(line)
+            paragraph = document.add_paragraph(line)
+            _apply_paragraph_rtl(paragraph)
         document.save(docx_buf)
         docx_buf.seek(0)
 
@@ -202,13 +234,12 @@ class ExportCustomContentZipView(APIView):
         # ZIP both
         zip_buf = io.BytesIO()
         with zipfile.ZipFile(zip_buf, mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
-            base_name = f"custom_content_{audio_text.id}"
             zf.writestr(f"{base_name}.docx", docx_buf.read())
             zf.writestr(f"{base_name}.pdf", pdf_buf.read())
         zip_buf.seek(0)
 
         resp = HttpResponse(zip_buf.getvalue(), content_type='application/zip')
-        resp['Content-Disposition'] = f'attachment; filename="custom_content_{audio_text.id}.zip"'
+        resp['Content-Disposition'] = f'attachment; filename="{base_name}.zip"'
         return resp
 
     
