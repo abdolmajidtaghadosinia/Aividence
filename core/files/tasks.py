@@ -17,6 +17,40 @@ from celery import states
 
 logger = logging.getLogger(__name__)
 
+# پرامپت پیش‌فرض بر اساس نوع فایل
+DEFAULT_TYPE_PROMPTS = {
+    "S": "این متن را به یک صورت جلسه رسمی با بخش‌های خلاصه، تصمیمات و اقدامات تبدیل کن.",
+    "L": "این متن را به قالب درس آموخته با توضیح مسئله، اقدام انجام‌شده و نتیجه تبدیل کن.",
+}
+
+
+def get_prompt_text_for_audio(audio_instance):
+    """دریافت پرامپت مناسب بر اساس نوع فایل یا زیرمجموعه"""
+    prompt = None
+
+    try:
+        # ابتدا بر اساس زیرمجموعه فعلی (سازگاری با داده‌های موجود)
+        prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
+
+        # در صورت نبود پرامپت فعال، تلاش بر اساس عنوان نوع فایل (صورت‌جلسه، درس‌آموخته و ...)
+        if not prompt:
+            prompt = Prompt.objects.filter(
+                type__title__iexact=audio_instance.get_file_type_display(),
+                is_active=True,
+            ).first()
+    except Exception as e:
+        logger.warning(f"⚠️ خطا در دریافت پرامپت: {e}")
+
+    if prompt and prompt.content:
+        return prompt.content
+
+    # پرامپت پیش‌فرض متناسب با نوع فایل
+    if audio_instance and audio_instance.file_type in DEFAULT_TYPE_PROMPTS:
+        return DEFAULT_TYPE_PROMPTS[audio_instance.file_type]
+
+    # fallback عمومی
+    return "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+
 
 def raise_task_failure(task, message, progress=0):
     """Register a Celery failure state with proper exception metadata and raise."""
@@ -380,8 +414,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                 logger.info("🤖 مرحله 4: پردازش متن با Gemini")
                 full_text = text  # استفاده از متن خام به عنوان fallback
                 try:
-                    prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
-                    prompt_text = prompt.content if prompt else "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+                    prompt_text = get_prompt_text_for_audio(audio_instance)
                     logger.info(f"📝 پرامپت استفاده شده: {prompt_text[:50]}...")
 
                     processed_text = process_with_gemini(prompt_text, text)

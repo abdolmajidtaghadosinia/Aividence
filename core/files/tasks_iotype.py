@@ -14,6 +14,37 @@ from files.models import Audio
 from office.models import AudioFileText
 from main.models import Prompt
 
+logger = logging.getLogger(__name__)
+
+# پرامپت پیش‌فرض بر اساس نوع فایل
+DEFAULT_TYPE_PROMPTS = {
+    "S": "این متن را به یک صورت جلسه رسمی با ساختار منظم شامل خلاصه، حاضرین و مصوبات تبدیل کن.",
+    "L": "این متن را به قالب درس آموخته شامل مسئله، اقدام اصلاحی و نتیجه تبدیل کن.",
+}
+
+
+def get_prompt_text_for_audio(audio_instance):
+    """دریافت پرامپت مناسب بر اساس نوع فایل یا زیرمجموعه"""
+    prompt = None
+
+    try:
+        prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
+        if not prompt:
+            prompt = Prompt.objects.filter(
+                type__title__iexact=audio_instance.get_file_type_display(),
+                is_active=True,
+            ).first()
+    except Exception as e:
+        logger.warning(f"⚠️ خطا در دریافت پرامپت: {e}")
+
+    if prompt and prompt.content:
+        return prompt.content
+
+    if audio_instance and audio_instance.file_type in DEFAULT_TYPE_PROMPTS:
+        return DEFAULT_TYPE_PROMPTS[audio_instance.file_type]
+
+    return "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+
 
 @shared_task(bind=True)
 def transcribe_audio(self, audio_path, audio_id=None, language='fa'):
@@ -267,8 +298,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
 
         # دریافت prompt
         try:
-            prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
-            prompt_text = prompt.content if prompt else "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+            prompt_text = get_prompt_text_for_audio(audio_instance)
             logger.info(f"پرامپت استفاده شده: {prompt_text[:50]}...")
         except Exception as e:
             logger.warning(f"خطا در دریافت پرامپت: {str(e)}")
