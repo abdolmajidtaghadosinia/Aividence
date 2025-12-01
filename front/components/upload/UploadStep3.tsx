@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { updateAudioStatus } from '../../api/api';
+import { updateAudioStatus, updateAudioTextByUuid } from '../../api/api';
 import { FileData } from '../../types';
 import FullScreenEditModal from './FullScreenEditModal';
 import { TagIcon, EditIcon, CheckIcon, ArrowRightIcon, ClipboardListIcon } from '../Icons';
@@ -13,24 +13,43 @@ interface UploadStep3Props {
 
 const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [editedText, setEditedText] = useState(data.editedText || data.originalText || '');
+    const [editedText, setEditedText] = useState(data.editedText || data.processedText || data.originalText || '');
+    const [isSaving, setIsSaving] = useState(false);
 
     React.useEffect(() => {
-        setEditedText(data.editedText || data.originalText || '');
-    }, [data.editedText, data.originalText]);
+        setEditedText(data.editedText || data.processedText || data.originalText || '');
+    }, [data.editedText, data.originalText, data.processedText]);
 
     const handleSaveEditedText = (newText: string) => {
         setEditedText(newText);
     };
     
+    const persistEditedText = async () => {
+        if (!data.upload_uuid) return;
+        try {
+            await updateAudioTextByUuid(
+                data.upload_uuid,
+                editedText || data.processedText || data.originalText || '',
+            );
+        } catch (error) {
+            console.error('Unable to persist final text', error);
+        }
+    };
+
     const handleFinalFinish = async () => {
-        onFinish({ ...data, editedText });
-        if (data && (data as any).id) {
-            try {
-                await updateAudioStatus(Number((data as any).id), 'A');
-            } catch (e) {
-                // در صورت نیاز نمایش پیام خطا اضافه شود
+        try {
+            setIsSaving(true);
+            await persistEditedText();
+            onFinish({ ...data, editedText });
+            if (data && (data as any).id) {
+                try {
+                    await updateAudioStatus(Number((data as any).id), 'A');
+                } catch (e) {
+                    // در صورت نیاز نمایش پیام خطا اضافه شود
+                }
             }
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -62,7 +81,7 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
                       <h4 className="font-semibold text-gray-800 mb-4">متن نهایی</h4>
                       <div className="bg-gray-50 p-4 rounded-lg border h-64 overflow-y-auto text-gray-700 leading-relaxed">
                           <StructuredTextPreview
-                              text={editedText || data.originalText || ''}
+                              text={editedText || data.processedText || data.originalText || ''}
                               title={data.type || 'متن نهایی'}
                               subject={data.name}
                               dateValue={data.uploadDate}
@@ -81,9 +100,13 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
                     <ArrowRightIcon className="w-4 h-4" />
                     <span>بازگشت به مرحله قبل</span>
                  </button>
-                 <button onClick={handleFinalFinish} className="bg-sky-500 text-white font-bold py-2.5 px-6 rounded-lg hover:bg-sky-600 transition shadow-md flex items-center gap-2">
+                 <button
+                    onClick={handleFinalFinish}
+                    disabled={isSaving}
+                    className={`bg-sky-500 text-white font-bold py-2.5 px-6 rounded-lg transition shadow-md flex items-center gap-2 ${isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:bg-sky-600'}`}
+                 >
                     <CheckIcon className="w-5 h-5" />
-                    <span>تایید نهایی و اتمام</span>
+                    <span>{isSaving ? 'در حال ذخیره...' : 'تایید نهایی و اتمام'}</span>
                  </button>
              </div>
 
