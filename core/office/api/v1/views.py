@@ -12,8 +12,10 @@ from .serializers import KeywordListSerializer
 
 try:
     from docx import Document  # python-docx
+    from docx.oxml.ns import qn
 except Exception:  # pragma: no cover
     Document = None
+    qn = None
 
 try:
     from reportlab.pdfgen import canvas
@@ -87,6 +89,16 @@ class ExportCustomContentZipView(APIView):
         if Document is None:
             return Response({'detail': 'python-docx نصب نیست.'}, status=500)
         document = Document()
+
+        # Set a Persian-friendly default font for better RTL rendering in Word.
+        if qn is not None:
+            try:
+                normal_style = document.styles['Normal']
+                normal_style.font.name = 'Vazirmatn'
+                normal_style._element.rPr.rFonts.set(qn('w:eastAsia'), 'Vazirmatn')
+            except Exception:
+                pass
+
         for line in content.splitlines() or ['']:
             document.add_paragraph(line)
         document.save(docx_buf)

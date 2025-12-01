@@ -175,7 +175,10 @@ const DashboardPage: React.FC = () => {
         const isProcessing = status === FileStatus.Processing;
 
         return (
-            <span className={`inline-flex items-center justify-center min-w-[100px] px-2.5 py-1 rounded-full text-xs font-medium ${bg} ${text} gap-x-1.5`}>
+            <span
+                className={`inline-flex items-center justify-center min-w-[110px] px-2.5 py-1 rounded-full whitespace-nowrap leading-tight font-medium ${bg} ${text} gap-x-1.5`}
+                style={{ fontSize: 'clamp(11px, 2vw, 13px)' }}
+            >
                 {isProcessing ? (
                     <div className="w-2 h-2 rounded-full border-2 border-current border-t-transparent animate-spin"></div>
                 ) : (
@@ -320,7 +323,15 @@ const DashboardPage: React.FC = () => {
                                                         )}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 hidden md:table-cell">{file.type}</td>
+                                                <td className="px-6 py-4 hidden md:table-cell align-top">
+                                                    <span
+                                                        className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
+                                                        style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
+                                                        title={file.type}
+                                                    >
+                                                        {file.type}
+                                                    </span>
+                                                </td>
                                                 <td className="px-6 py-4">
                                                     <div className="space-y-2">
                                                         {renderStatusBadge(file.status)}

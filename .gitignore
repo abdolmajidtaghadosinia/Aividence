@@ -1,3 +1,10 @@
 front/node_modules/
 front/dist/
 .DS_Store
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Optional binary favicons (icons directory keeps a .gitkeep only)
+front/assets/icons/*
+!front/assets/icons/.gitkeep

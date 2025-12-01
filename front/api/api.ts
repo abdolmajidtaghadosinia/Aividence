@@ -355,6 +355,13 @@ export const getAudioTextByUuid = async (uuid: string): Promise<AudioTextGetResp
     return Api.get<AudioTextGetResponse>(`/api/v1/files/audio/${uuid}/text/`);
 };
 
+export const updateAudioTextByUuid = async (
+    uuid: string,
+    customText: string,
+): Promise<{ success: boolean; message?: string; custom_text?: string; updated_at?: string; }> => {
+    return Api.put(`/api/v1/files/audio/${uuid}/text/`, { custom_text: customText });
+};
+
 // -----------------------------
 // Reprocess Audio APIs
 // -----------------------------

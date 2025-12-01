@@ -281,11 +281,11 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
         full_text = content_file  # استفاده از متن خام به عنوان fallback
         try:
             processed_text = process_with_gemini(prompt_text, content_file)
-            if processed_text and len(processed_text.strip()) > len(content_file.strip()):
-                full_text = processed_text
-                logger.info("پردازش هوشمند متن با Gemini تکمیل شد")
+            if processed_text and processed_text.strip():
+                full_text = processed_text.strip()
+                logger.info("پردازش هوشمند متن با Gemini تکمیل شد و جایگزین متن خام شد")
             else:
-                logger.warning("متن پردازش شده توسط Gemini کوتاه‌تر یا خالی است، از متن اصلی استفاده می‌شود")
+                logger.warning("متن پردازش شده توسط Gemini خالی بود، از متن اصلی استفاده می‌شود")
         except Exception as e:
             logger.warning(f"خطا در پردازش هوشمند متن با Gemini، از متن اصلی استفاده می‌شود: {str(e)}")
 

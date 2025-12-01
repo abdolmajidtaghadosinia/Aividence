@@ -162,20 +162,20 @@ const DictionaryPage: React.FC = () => {
                 </div>
 
                 {isAddFormVisible && (
-                    <div className="soft-card p-6 rounded-2xl mb-6 transition-all">
-                        <h3 className="font-bold text-lg mb-4">افزودن عبارت جدید</h3>
+                    <div className="soft-card p-6 rounded-2xl mb-6 transition-all text-slate-900">
+                        <h3 className="font-bold text-lg mb-4 text-slate-900">افزودن عبارت جدید</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input
                                 type="text"
                                 placeholder="عبارت"
                                 value={newTerm}
                                 onChange={(e) => setNewTerm(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95]"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95] text-slate-900 placeholder:text-slate-600"
                             />
                             <select
                                 value={newSubCollection}
                                 onChange={(e) => setNewSubCollection(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:ring-[#4b5f95] focus:border-[#4b5f95]"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white focus:ring-[#4b5f95] focus:border-[#4b5f95] text-slate-900"
                             >
                                 <option value="">انتخاب زیرمجموعه</option>
                                 {[...new Set(terms.map(t => t.subset))].map(sc => (
@@ -187,7 +187,7 @@ const DictionaryPage: React.FC = () => {
                             placeholder="توضیحات"
                             value={newDescription}
                             onChange={(e) => setNewDescription(e.target.value)}
-                            className="w-full mt-4 px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95]"
+                            className="w-full mt-4 px-4 py-2 border border-slate-200 rounded-xl focus:ring-[#4b5f95] focus:border-[#4b5f95] text-slate-900 placeholder:text-slate-600"
                             rows={3}
                         />
                         {formError && <p className="text-red-500 text-sm mt-2">{formError}</p>}
