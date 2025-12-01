@@ -3,7 +3,7 @@ import { FileData } from '../../types';
 import FullScreenEditModal from './FullScreenEditModal';
 import { RefreshCwIcon, TrashIcon, CheckIcon, ArrowRightIcon, EditIcon, FileTypeIcon, FolderIcon } from '../Icons';
 import { toPersianDigits } from '../../constants';
-import { reprocessAudio } from '../../api/api';
+import { getAudioTextByUuid, getTaskProgress, reprocessAudio } from '../../api/api';
 
 interface UploadStep2Props {
     onNext: (data: Partial<FileData>) => void;
@@ -15,6 +15,9 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
     const [progress, setProgress] = useState(0);
     const [localData, setLocalData] = useState(data);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isReprocessing, setIsReprocessing] = useState(false);
+    const [reprocessStatus, setReprocessStatus] = useState<string | null>(null);
+    const [taskId, setTaskId] = useState<string | null>(null);
 
     useEffect(() => {
         const timer = setTimeout(() => setProgress(100), 500);
@@ -30,6 +33,72 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
             editedText: data.editedText,
         }));
     }, [data.originalText, data.editedText, data.processedText]);
+
+    const pollingRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+    useEffect(() => {
+        return () => {
+            if (taskId) {
+                clearInterval(pollingRef.current as any);
+            }
+        };
+    }, [taskId]);
+
+    const fetchLatestText = async () => {
+        if (!localData.upload_uuid) return;
+
+        const latest = await getAudioTextByUuid(localData.upload_uuid);
+        setLocalData(prev => ({
+            ...prev,
+            processedText: latest.processed_text || latest.original_text || '',
+            originalText: latest.original_text || latest.processed_text || '',
+            editedText: prev.editedText || latest.custom_text || latest.processed_text || latest.original_text || '',
+        }));
+    };
+
+    const stopPolling = () => {
+        if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+        }
+    };
+
+    const startPollingProgress = (task: string) => {
+        pollingRef.current = setInterval(async () => {
+            try {
+                const progressRes = await getTaskProgress(task);
+                setReprocessStatus(progressRes.status || 'در حال پردازش...');
+
+                const numericProgress = typeof progressRes.progress === 'number'
+                    ? progressRes.progress
+                    : parseFloat(String(progressRes.progress).replace('%', ''));
+
+                if (Number.isFinite(numericProgress)) {
+                    setProgress(Math.min(100, numericProgress));
+                }
+
+                if (progressRes.is_completed || progressRes.state === 'SUCCESS') {
+                    stopPolling();
+                    await fetchLatestText();
+                    setProgress(100);
+                    setIsReprocessing(false);
+                    setReprocessStatus('پردازش مجدد با موفقیت انجام شد');
+                    setTaskId(null);
+                } else if (progressRes.is_failed || progressRes.state === 'FAILURE') {
+                    stopPolling();
+                    setIsReprocessing(false);
+                    setReprocessStatus('خطا در پردازش مجدد');
+                    setTaskId(null);
+                }
+            } catch (error) {
+                console.error('Error polling task progress', error);
+                stopPolling();
+                setIsReprocessing(false);
+                setReprocessStatus('خطا در ارتباط با سرور');
+                setTaskId(null);
+            }
+        }, 3000);
+    };
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setLocalData({ ...localData, [e.target.name]: e.target.value });
@@ -39,6 +108,32 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
         setLocalData(prev => ({ ...prev, editedText: newText }));
     };
 
+    const handleReprocess = async () => {
+        if (!localData.upload_uuid || isReprocessing) return;
+
+        try {
+            stopPolling();
+            setIsReprocessing(true);
+            setReprocessStatus('در حال آغاز پردازش مجدد...');
+            setProgress(0);
+
+            const res = await reprocessAudio(localData.upload_uuid);
+
+            if (!res?.success || !res.task_id) {
+                setIsReprocessing(false);
+                setReprocessStatus(res?.message || 'خطا در آغاز پردازش مجدد');
+                return;
+            }
+
+            setTaskId(res.task_id);
+            startPollingProgress(res.task_id);
+        } catch (error) {
+            console.error('Unable to start reprocess', error);
+            setIsReprocessing(false);
+            setReprocessStatus('خطا در برقراری ارتباط با سرور');
+        }
+    };
+
     return (
         <div className="flex-1 p-2">
             <div className="flex justify-between items-center mb-4">
@@ -46,6 +141,9 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                 <span className="text-sm text-gray-500">{toPersianDigits(progress)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6"><div className="bg-sky-500 h-2.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div></div>
+            {reprocessStatus && (
+                <div className="mb-4 text-sm text-gray-600">{reprocessStatus}</div>
+            )}
             
             {progress === 100 ? (
                 <>
@@ -67,7 +165,7 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                     
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">متن استخراج شده (فقط خواندنی)</label>
-                        <div className="w-full h-64 p-3 bg-gray-100 border border-gray-300 rounded-lg overflow-y-auto leading-relaxed">
+                        <div className="w-full h-64 p-3 bg-gray-100 border border-gray-300 rounded-lg overflow-y-auto leading-relaxed text-gray-800">
                            {localData.originalText || localData.processedText || ''}
                         </div>
                     </div>
@@ -85,20 +183,12 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                         </button>
                         <div className="flex gap-x-4">
                             <button
-                                onClick={async () => {
-                                    if (!localData.upload_uuid) return;
-                                    try {
-                                        setProgress(0);
-                                        const res = await reprocessAudio(localData.upload_uuid);
-                                        // Optional: handle task_id if needed
-                                    } catch (e) {
-                                        // noop
-                                    }
-                                }}
-                                className="text-gray-600 font-medium py-2 px-4 rounded-lg hover:bg-gray-100 transition flex items-center gap-2"
+                                onClick={handleReprocess}
+                                disabled={isReprocessing}
+                                className={`text-gray-600 font-medium py-2 px-4 rounded-lg transition flex items-center gap-2 ${isReprocessing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-100'}`}
                             >
                                 <RefreshCwIcon className="w-4 h-4" />
-                                <span>پردازش مجدد</span>
+                                <span>{isReprocessing ? 'در حال پردازش...' : 'پردازش مجدد'}</span>
                             </button>
                             {/* <button className="bg-red-100 text-red-700 font-bold py-2 px-4 rounded-lg hover:bg-red-200 transition flex items-center gap-2">
                                 <TrashIcon className="w-4 h-4" />

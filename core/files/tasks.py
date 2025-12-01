@@ -385,11 +385,11 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                     logger.info(f"📝 پرامپت استفاده شده: {prompt_text[:50]}...")
 
                     processed_text = process_with_gemini(prompt_text, text)
-                    if processed_text and len(processed_text.strip()) > len(text.strip()):
-                        full_text = processed_text
-                        logger.info(f"✅ پردازش با Gemini تکمیل شد - طول متن نهایی: {len(full_text)} کاراکتر")
+                    if processed_text and processed_text.strip():
+                        full_text = processed_text.strip()
+                        logger.info(f"✅ پردازش با Gemini تکمیل شد - متن ساختاریافته جایگزین شد (طول: {len(full_text)})")
                     else:
-                        logger.warning("⚠️ متن پردازش شده توسط Gemini کوتاه‌تر یا خالی است، از متن اصلی استفاده می‌شود")
+                        logger.warning("⚠️ متن پردازش شده توسط Gemini خالی بود، از متن اصلی استفاده می‌شود")
 
                 except Exception as e:
                     logger.warning(f"⚠️ خطا در پردازش متن با Gemini، از متن اصلی استفاده می‌شود: {str(e)}")
