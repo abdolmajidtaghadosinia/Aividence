@@ -7,6 +7,7 @@ from django.http import HttpResponse
 import io
 import os
 import zipfile
+from urllib.parse import quote
 from office.models import KeywordList, AudioFileText
 from .serializers import KeywordListSerializer
 
@@ -56,6 +57,30 @@ class ExportCustomContentZipView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    @staticmethod
+    def _derive_export_base_name(audio_text: AudioFileText) -> str:
+        """Return the original audio filename (without extension) when available."""
+
+        source_file_name = ""
+        if getattr(audio_text.file, "file", None):
+            source_file_name = os.path.basename(audio_text.file.file.name or "")
+
+        if not source_file_name:
+            source_file_name = audio_text.file.name or ""
+
+        base_name, _ = os.path.splitext(source_file_name)
+        if base_name:
+            return base_name
+
+        return f"audio_{audio_text.file_id or audio_text.id}"
+
+    @staticmethod
+    def _content_disposition(filename: str) -> str:
+        """Build a UTF-8 friendly Content-Disposition header value."""
+
+        quoted = quote(filename)
+        return f"attachment; filename*=UTF-8''{quoted}; filename=\"{filename}\""
+
     def post(self, request):
         """Return a ZIP containing DOCX and PDF renderings of the custom or processed text.
 
@@ -88,13 +113,7 @@ class ExportCustomContentZipView(APIView):
             content = audio_text.content_processed
             # return Response({'detail': 'custom_content خالی است.'}, status=400)
 
-        source_file_name = None
-        if getattr(audio_text.file, "file", None):
-            source_file_name = os.path.basename(audio_text.file.file.name or "")
-
-        base_name, _ = os.path.splitext(source_file_name or audio_text.file.name or "")
-        if not base_name:
-            base_name = f"audio_{audio_text.file_id or audio_text.id}"
+        base_name = self._derive_export_base_name(audio_text)
 
         # In-memory DOCX
         docx_buf = io.BytesIO()
@@ -119,16 +138,32 @@ class ExportCustomContentZipView(APIView):
                 except Exception:
                     pass
 
-        # Set a Persian-friendly default font for better RTL rendering in Word.
-        if qn is not None:
-            try:
-                normal_style = document.styles['Normal']
-                normal_style.font.name = 'Vazirmatn'
-                normal_style._element.rPr.rFonts.set(qn('w:eastAsia'), 'Vazirmatn')
-                if WD_PARAGRAPH_ALIGNMENT is not None:
-                    normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
-            except Exception:
-                pass
+        def _apply_document_rtl_defaults():
+            """Set document-level RTL hints and default RTL alignment for new paragraphs."""
+
+            if qn is not None:
+                try:
+                    normal_style = document.styles['Normal']
+                    normal_style.font.name = 'Vazirmatn'
+                    normal_style._element.rPr.rFonts.set(qn('w:eastAsia'), 'Vazirmatn')
+                    if WD_PARAGRAPH_ALIGNMENT is not None:
+                        normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+                except Exception:
+                    pass
+
+            if qn is not None and OxmlElement is not None:
+                try:
+                    for section in document.sections:
+                        sect_pr = section._sectPr
+                        bidi = sect_pr.find(qn('w:bidi'))
+                        if bidi is None:
+                            bidi = OxmlElement('w:bidi')
+                            bidi.set(qn('w:val'), '1')
+                            sect_pr.append(bidi)
+                except Exception:
+                    pass
+
+        _apply_document_rtl_defaults()
 
         for line in content.splitlines() or ['']:
             paragraph = document.add_paragraph(line)
@@ -239,7 +274,7 @@ class ExportCustomContentZipView(APIView):
         zip_buf.seek(0)
 
         resp = HttpResponse(zip_buf.getvalue(), content_type='application/zip')
-        resp['Content-Disposition'] = f'attachment; filename="{base_name}.zip"'
+        resp['Content-Disposition'] = self._content_disposition(f"{base_name}.zip")
         return resp
 
     
