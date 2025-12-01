@@ -59,6 +59,18 @@ docker-compose -f docker-compose.simple.yml down -v
 
 ## مشکلات احتمالی و راه‌حل
 
+### مشکل 0: عدم اتصال Docker Desktop (ویندوز)
+اگر پیام‌هایی شبیه زیر دریافت کردید:
+
+```
+open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified
+```
+
+1. Docker Desktop را اجرا کنید و مطمئن شوید در حالت **Linux containers** است.
+2. در **PowerShell** یا **WSL** دستور `docker info` را اجرا کنید؛ اگر خطا داد، WSL2 را نصب/فعال و Docker Desktop را ری‌استارت کنید.
+3. در صورت داشتن چند context، با `docker context use default` به context پیش‌فرض برگردید.
+4. سپس دوباره `docker-compose -f docker-compose.local.yml up --build` را اجرا کنید.
+
 ### مشکل 1: Healthcheck Error
 اگر با پیام "dependency failed to start: container backend_local has no healthcheck configured" مواجه شدید:
 
