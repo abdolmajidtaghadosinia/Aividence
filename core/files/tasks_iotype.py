@@ -46,6 +46,35 @@ def get_prompt_text_for_audio(audio_instance):
     return "این متن رو به یک صورت جلسه رسمی تبدیل کن"
 
 
+def build_gemini_payload(prompt_text, content_file, audio_instance=None):
+    """ساخت payload استاندارد برای Gemini با افزودن متادیتا و نقش‌ها."""
+
+    system_parts = [{"text": prompt_text.strip()}]
+
+    if audio_instance:
+        try:
+            meta = (
+                f"نوع فایل: {audio_instance.get_file_type_display()}\n"
+                f"عنوان فایل: {audio_instance.name}\n"
+                f"موضوع: {audio_instance.subject}"
+            )
+            system_parts.append({"text": meta})
+        except Exception:
+            pass
+
+    return {
+        "system_instruction": {"parts": system_parts},
+        "contents": [
+            {
+                "role": "user",
+                "parts": [
+                    {"text": content_file}
+                ],
+            }
+        ],
+    }
+
+
 @shared_task(bind=True)
 def transcribe_audio(self, audio_path, audio_id=None, language='fa'):
     """
@@ -310,7 +339,7 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
         # --- پردازش هوشمند متن با Gemini (اختیاری) ---
         full_text = content_file  # استفاده از متن خام به عنوان fallback
         try:
-            processed_text = process_with_gemini(prompt_text, content_file)
+            processed_text = process_with_gemini(prompt_text, content_file, audio_instance)
             if processed_text and processed_text.strip():
                 full_text = processed_text.strip()
                 logger.info("پردازش هوشمند متن با Gemini تکمیل شد و جایگزین متن خام شد")
@@ -437,21 +466,13 @@ def transcribe_file(audio_name, audio_path, retries=3, wait=5):
     raise RuntimeError("❌ سرویس iotype پس از چندین تلاش پاسخگو نیست یا متن برنگشت.")
 
 
-def process_with_gemini(prompt_text, content_file):
+def process_with_gemini(prompt_text, content_file, audio_instance=None):
     """پردازش هوشمند متن خام با Gemini"""
     import logging
     logger = logging.getLogger(__name__)
-    
+
     url = settings.GEMINI_URL
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt_text + "\n " + content_file}
-                ]
-            }
-        ]
-    }
+    payload = build_gemini_payload(prompt_text, content_file, audio_instance)
     headers = {
         'x-goog-api-key': settings.GEMINI_API_KEY,
         'Content-Type': 'application/json'
