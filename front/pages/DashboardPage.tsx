@@ -201,7 +201,8 @@ const DashboardPage: React.FC = () => {
                 setSelectedFile({
                     ...file,
                     originalText: res.original_text,
-                    editedText: res.custom_text || res.original_text,
+                    processedText: res.processed_text || res.original_text,
+                    editedText: res.custom_text || res.processed_text || res.original_text,
                 });
                 return;
             } catch (error) {

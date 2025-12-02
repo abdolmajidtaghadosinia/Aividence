@@ -34,10 +34,12 @@
   - Node.js 20 و npm
   - PostgreSQL و Redis در دسترس
 
+> **کاربران ویندوز**: Docker Desktop باید در حالت Linux containers و WSL2 فعال باشد. پیش از اجرای دستورات Compose، Docker Desktop را اجرا کنید، سپس در ترمینال (PowerShell یا WSL) دستور `docker info` را بزنید تا از اتصال به `default` context مطمئن شوید. پیام خطای `open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified` معمولاً یعنی Docker Desktop در حال اجرا نیست یا WSL نصب/فعال نشده است.
+
 ## آماده‌سازی متغیرهای محیطی
 نمونه‌ای از مقادیر مورد نیاز در `core/secrets.env` قرار دارد. برای توسعه یا استقرار محلی:
 1. یک کپی به نام `core/secrets.local.env` بسازید.
-2. مقادیر حساس را با کلیدهای امن خود جایگزین کنید (کلید جنگو، کلید API ترنسکرایب، کلید Gemini و ...).
+2. مقادیر حساس را با کلیدهای امن خود جایگزین کنید (کلید جنگو، کلید API ترنسکرایب، کلید Hugging Face و ...).
 3. این فایل در `.gitignore` قرار دارد و نباید در مخزن عمومی تعهد شود.
 
 ### دسترسی نوتیفیکیشن مرورگر

@@ -59,6 +59,18 @@ docker-compose -f docker-compose.simple.yml down -v
 
 ## مشکلات احتمالی و راه‌حل
 
+### مشکل 0: عدم اتصال Docker Desktop (ویندوز)
+اگر پیام‌هایی شبیه زیر دریافت کردید:
+
+```
+open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified
+```
+
+1. Docker Desktop را اجرا کنید و مطمئن شوید در حالت **Linux containers** است.
+2. در **PowerShell** یا **WSL** دستور `docker info` را اجرا کنید؛ اگر خطا داد، WSL2 را نصب/فعال و Docker Desktop را ری‌استارت کنید.
+3. در صورت داشتن چند context، با `docker context use default` به context پیش‌فرض برگردید.
+4. سپس دوباره `docker-compose -f docker-compose.local.yml up --build` را اجرا کنید.
+
 ### مشکل 1: Healthcheck Error
 اگر با پیام "dependency failed to start: container backend_local has no healthcheck configured" مواجه شدید:
 
@@ -126,6 +138,22 @@ ports:
 DB_PASSWORD=your_password
 POSTGRES_PORT=5433
 ```
+
+### تنظیم Hugging Face برای پردازش متن
+برای جایگزینی پردازش متن خام با مدل Qwen در Hugging Face:
+
+1. توکن را در `HF_API_TOKEN` قرار دهید (از داشبورد Hugging Face دریافت کنید).
+2. در صورت نیاز URL یا مدل را تغییر دهید؛ مقادیر پیش‌فرض برای Qwen 2.5 72B تنظیم شده است:
+
+```env
+HF_API_URL=https://router.huggingface.co/v1/chat/completions
+HF_MODEL=Qwen/Qwen2.5-72B-Instruct
+HF_API_TOKEN=your_token_here
+```
+
+اگر همچنان از URL قدیمی `api-inference.huggingface.co` استفاده کنید، برنامه به صورت خودکار آن را به دامنه جدید `router.huggingface.co` و مسیر استاندارد `/v1/chat/completions` تبدیل می‌کند تا خطای 410 برطرف شود.
+
+در صورت خالی بودن `HF_API_TOKEN` پردازش هوشمند اجرا نمی‌شود و متن خام همان‌طور ذخیره خواهد شد.
 
 ## نکات مهم
 1. فایل `secrets.local.env` را در `.gitignore` قرار دهید
