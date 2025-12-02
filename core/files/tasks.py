@@ -90,7 +90,7 @@ def build_gemini_url():
 
     # اگر URL کامل داده نشده بود، از مدل و پایه استفاده می‌کنیم
     if not raw_url:
-        model_raw = getattr(settings, 'GEMINI_MODEL', 'Gemini 2.0 Flash-Lite').strip()
+        model_raw = getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash-lite').strip()
         model = quote(model_raw, safe='')
         api_base = getattr(settings, 'GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
         raw_url = f"{api_base}/{model}"
