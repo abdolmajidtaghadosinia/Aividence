@@ -82,6 +82,29 @@ def build_gemini_payload(prompt_text, content_file, audio_instance=None):
     }
 
 
+def build_gemini_url():
+    """آدرس معتبر برای فراخوانی Gemini را بر اساس تنظیمات می‌سازد."""
+    base_url = settings.GEMINI_URL.strip() if getattr(settings, 'GEMINI_URL', '') else ''
+
+    # سازگاری با URLهای قدیمی که مدل -latest ندارند
+    legacy_suffix = 'gemini-1.5-flash:generateContent'
+    if base_url.endswith(legacy_suffix):
+        base_url = base_url.replace(legacy_suffix, 'gemini-1.5-flash-latest:generateContent')
+
+    # اگر URL کامل داده نشده بود، از مدل و پایه استفاده می‌کنیم
+    if not base_url:
+        model = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash-latest').strip()
+        api_base = getattr(settings, 'GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
+        base_url = f"{api_base}/{model}:generateContent"
+
+    # اضافه کردن کلید API در صورت نیاز
+    if settings.GEMINI_API_KEY and 'key=' not in base_url:
+        separator = '&' if '?' in base_url else '?'
+        base_url = f"{base_url}{separator}key={settings.GEMINI_API_KEY}"
+
+    return base_url
+
+
 def raise_task_failure(task, message, progress=0):
     """Register a Celery failure state with proper exception metadata and raise."""
     try:
@@ -539,9 +562,10 @@ def process_with_gemini(prompt_text, content_file, audio_instance=None):
     import logging
     logger = logging.getLogger(__name__)
 
-    url = settings.GEMINI_URL
+    url = build_gemini_url()
     payload = build_gemini_payload(prompt_text, content_file, audio_instance)
     headers = {
+        # کلید در URL هم اضافه می‌شود تا از خطای 404/401 جلوگیری شود
         'x-goog-api-key': settings.GEMINI_API_KEY,
         'Content-Type': 'application/json'
     }

@@ -211,7 +211,11 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 IO_TRANSCRIBE_URL = os.getenv('IO_TRANSCRIBE_URL', 'https://www.iotype.com/developer/transcription')
 IO_TRANSCRIBE_TOKEN = os.getenv('IO_TRANSCRIBE_TOKEN', '')
 IO_TRANSCRIBE_COOKIE = os.getenv('IO_TRANSCRIBE_COOKIE', '')
-GEMINI_URL = os.getenv('GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent')
+# Gemini configuration
+# اگر GEMINI_URL به صورت کامل تنظیم نشده باشد، از ترکیب GEMINI_API_BASE و GEMINI_MODEL استفاده می‌کنیم
+GEMINI_URL = os.getenv('GEMINI_URL', '').strip()
+GEMINI_API_BASE = os.getenv('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash-latest').strip()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 
 # تنظیمات بهینه‌سازی دیتابیس

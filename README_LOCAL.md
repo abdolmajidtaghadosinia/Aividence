@@ -139,6 +139,20 @@ DB_PASSWORD=your_password
 POSTGRES_PORT=5433
 ```
 
+### تنظیم Gemini
+برای جلوگیری از خطاهای 404 در Gemini:
+
+1. کلید را در `GEMINI_API_KEY` تنظیم کنید.
+2. در صورت استفاده از URL پیش‌فرض قدیمی، مقدار `GEMINI_URL` را خالی بگذارید یا مدل را به `gemini-1.5-flash-latest` تغییر دهید:
+
+```env
+GEMINI_URL=
+GEMINI_MODEL=gemini-1.5-flash-latest
+GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1beta/models
+```
+
+کد پردازش خودکاراً URL قدیمی `.../gemini-1.5-flash:generateContent` را به نسخه `-latest` ارتقا می‌دهد و در صورت نبودن `?key=` کلید را به URL اضافه می‌کند.
+
 ## نکات مهم
 1. فایل `secrets.local.env` را در `.gitignore` قرار دهید
 2. برای production از فایل‌های اصلی استفاده کنید
