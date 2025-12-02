@@ -9,6 +9,7 @@ import json
 import time
 import requests
 import logging
+from urllib.parse import quote
 from django.conf import settings
 from files.models import Audio
 from office.models import AudioFileText
@@ -86,6 +87,9 @@ def build_gemini_url():
     """آدرس معتبر برای فراخوانی Gemini را بر اساس تنظیمات می‌سازد."""
     base_url = settings.GEMINI_URL.strip() if getattr(settings, 'GEMINI_URL', '') else ''
 
+    if ' ' in base_url:
+        base_url = base_url.replace(' ', '%20')
+
     # سازگاری با URLهای قدیمی که مدل -latest ندارند
     legacy_suffix = 'gemini-1.5-flash:generateContent'
     if base_url.endswith(legacy_suffix):
@@ -93,9 +97,14 @@ def build_gemini_url():
 
     # اگر URL کامل داده نشده بود، از مدل و پایه استفاده می‌کنیم
     if not base_url:
-        model = getattr(settings, 'GEMINI_MODEL', 'gemini-1.5-flash-latest').strip()
+        model_raw = getattr(settings, 'GEMINI_MODEL', 'Gemini 2.0 Flash-Lite').strip()
+        model = quote(model_raw, safe='')
         api_base = getattr(settings, 'GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
         base_url = f"{api_base}/{model}:generateContent"
+    elif ':generateContent' not in base_url.split('?')[0]:
+        base_path, *query = base_url.split('?', 1)
+        base_path = base_path.rstrip('/') + ':generateContent'
+        base_url = f"{base_path}?{query[0]}" if query else base_path
 
     # اضافه کردن کلید API در صورت نیاز
     if settings.GEMINI_API_KEY and 'key=' not in base_url:
