@@ -218,6 +218,14 @@ GEMINI_API_BASE = os.getenv('GEMINI_API_BASE', 'https://generativelanguage.googl
 GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash').strip()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 
+# Hugging Face configuration برای پردازش متن
+HF_API_URL = os.getenv(
+    'HF_API_URL',
+    'https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions',
+).strip()
+HF_MODEL = os.getenv('HF_MODEL', 'Qwen/Qwen2.5-72B-Instruct').strip()
+HF_API_TOKEN = os.getenv('HF_API_TOKEN', '').strip()
+
 # تنظیمات بهینه‌سازی دیتابیس
 DATABASES['default']['CONN_MAX_AGE'] = 600  # 10 دقیقه
 

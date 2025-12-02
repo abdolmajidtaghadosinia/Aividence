@@ -139,19 +139,19 @@ DB_PASSWORD=your_password
 POSTGRES_PORT=5433
 ```
 
-### تنظیم Gemini
-برای جلوگیری از خطاهای 404 در Gemini:
+### تنظیم Hugging Face برای پردازش متن
+برای جایگزینی پردازش متن خام با مدل Qwen در Hugging Face:
 
-1. کلید را در `GEMINI_API_KEY` تنظیم کنید.
-2. برای مدل پیش‌فرض جدید، مقدار `GEMINI_URL` را خالی بگذارید تا آدرس زیر استفاده شود:
+1. توکن را در `HF_API_TOKEN` قرار دهید (از داشبورد Hugging Face دریافت کنید).
+2. در صورت نیاز URL یا مدل را تغییر دهید؛ مقادیر پیش‌فرض برای Qwen 2.5 72B تنظیم شده است:
 
 ```env
-GEMINI_URL=
-GEMINI_MODEL="gemini-2.5-flash"
-GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1beta/models
+HF_API_URL=https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct/v1/chat/completions
+HF_MODEL=Qwen/Qwen2.5-72B-Instruct
+HF_API_TOKEN=your_token_here
 ```
 
-کد پردازش مدل را به صورت URL امن (`gemini-2.5-flash:generateContent`) رمزگذاری می‌کند و اگر رشته `?key=` در URL نباشد کلید را اضافه می‌کند. اگر همچنان از URL یا مدل‌های قدیمی مانند `gemini-1.5-flash` یا `gemini-2.5-flash-lite` استفاده می‌کنید، مقدار `GEMINI_URL` را خالی بگذارید تا به‌صورت خودکار به مدل تنظیم‌شده (پیش‌فرض: `gemini-2.5-flash`) جایگزین شود.
+در صورت خالی بودن `HF_API_TOKEN` پردازش هوشمند اجرا نمی‌شود و متن خام همان‌طور ذخیره خواهد شد.
 
 ## نکات مهم
 1. فایل `secrets.local.env` را در `.gitignore` قرار دهید
