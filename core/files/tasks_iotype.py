@@ -9,7 +9,8 @@ import json
 import time
 import requests
 import logging
-from urllib.parse import quote
+import re
+from urllib.parse import quote, urlsplit, urlunsplit
 from django.conf import settings
 from files.models import Audio
 from office.models import AudioFileText
@@ -78,26 +79,30 @@ def build_gemini_payload(prompt_text, content_file, audio_instance=None):
 
 def build_gemini_url():
     """آدرس معتبر برای فراخوانی Gemini را بر اساس تنظیمات می‌سازد."""
-    base_url = settings.GEMINI_URL.strip() if getattr(settings, 'GEMINI_URL', '') else ''
-
-    if ' ' in base_url:
-        base_url = base_url.replace(' ', '%20')
-
-    # سازگاری با URLهای قدیمی که مدل -latest ندارند
-    legacy_suffix = 'gemini-1.5-flash:generateContent'
-    if base_url.endswith(legacy_suffix):
-        base_url = base_url.replace(legacy_suffix, 'gemini-1.5-flash-latest:generateContent')
+    raw_url = settings.GEMINI_URL.strip() if getattr(settings, 'GEMINI_URL', '') else ''
 
     # اگر URL کامل داده نشده بود، از مدل و پایه استفاده می‌کنیم
-    if not base_url:
+    if not raw_url:
         model_raw = getattr(settings, 'GEMINI_MODEL', 'Gemini 2.0 Flash-Lite').strip()
         model = quote(model_raw, safe='')
         api_base = getattr(settings, 'GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
-        base_url = f"{api_base}/{model}:generateContent"
-    elif ':generateContent' not in base_url.split('?')[0]:
-        base_path, *query = base_url.split('?', 1)
-        base_path = base_path.rstrip('/') + ':generateContent'
-        base_url = f"{base_path}?{query[0]}" if query else base_path
+        raw_url = f"{api_base}/{model}"
+
+    # نرمال‌سازی فضای خالی و کاراکترهای غیرمجاز مسیر
+    cleaned = raw_url.replace(' ', '%20')
+    split = urlsplit(cleaned)
+    path = quote(split.path, safe='/:')
+
+    # سازگاری با URLهای قدیمی که مدل -latest ندارند
+    legacy_suffix = 'gemini-1.5-flash:generateContent'
+    if path.endswith(legacy_suffix):
+        path = path.replace(legacy_suffix, 'gemini-1.5-flash-latest:generateContent')
+
+    # اطمینان از افزودن suffix :generateContent
+    if not path.endswith(':generateContent'):
+        path = path.rstrip('/') + ':generateContent'
+
+    base_url = urlunsplit((split.scheme or 'https', split.netloc, path, split.query, split.fragment))
 
     # اضافه کردن کلید API در صورت نیاز
     if settings.GEMINI_API_KEY and 'key=' not in base_url:
@@ -510,12 +515,13 @@ def process_with_gemini(prompt_text, content_file, audio_instance=None):
         'x-goog-api-key': settings.GEMINI_API_KEY,
         'Content-Type': 'application/json'
     }
-    
+
     if not settings.GEMINI_API_KEY:
         raise RuntimeError("❌ GEMINI_API_KEY تنظیم نشده است")
 
     try:
-        logger.info("ارسال درخواست به Gemini API")
+        safe_url = re.sub(r'(key=)[^&]+', r'\1***', url)
+        logger.info(f"ارسال درخواست به Gemini API - URL: {safe_url}")
         resp = requests.post(url, headers=headers, json=payload, timeout=120)
         resp.raise_for_status()
         
