@@ -147,11 +147,11 @@ POSTGRES_PORT=5433
 
 ```env
 GEMINI_URL=
-GEMINI_MODEL="gemini-2.5-flash-lite"
+GEMINI_MODEL="gemini-2.5-flash"
 GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1beta/models
 ```
 
-کد پردازش مدل را به صورت URL امن (`gemini-2.5-flash-lite:generateContent`) رمزگذاری می‌کند و اگر رشته `?key=` در URL نباشد کلید را اضافه می‌کند. اگر همچنان از مدل قدیمی `gemini-1.5-flash` استفاده می‌کنید، مقدار `GEMINI_URL` را خالی بگذارید تا به‌صورت خودکار به نسخه `-latest` ارتقا یابد.
+کد پردازش مدل را به صورت URL امن (`gemini-2.5-flash:generateContent`) رمزگذاری می‌کند و اگر رشته `?key=` در URL نباشد کلید را اضافه می‌کند. اگر همچنان از URL یا مدل‌های قدیمی مانند `gemini-1.5-flash` یا `gemini-2.5-flash-lite` استفاده می‌کنید، مقدار `GEMINI_URL` را خالی بگذارید تا به‌صورت خودکار به مدل تنظیم‌شده (پیش‌فرض: `gemini-2.5-flash`) جایگزین شود.
 
 ## نکات مهم
 1. فایل `secrets.local.env` را در `.gitignore` قرار دهید

@@ -215,7 +215,7 @@ IO_TRANSCRIBE_COOKIE = os.getenv('IO_TRANSCRIBE_COOKIE', '')
 # اگر GEMINI_URL به صورت کامل تنظیم نشده باشد، از ترکیب GEMINI_API_BASE و GEMINI_MODEL استفاده می‌کنیم
 GEMINI_URL = os.getenv('GEMINI_URL', '').strip()
 GEMINI_API_BASE = os.getenv('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash-lite').strip()
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash').strip()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 
 # تنظیمات بهینه‌سازی دیتابیس

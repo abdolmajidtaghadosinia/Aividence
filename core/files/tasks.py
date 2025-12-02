@@ -90,7 +90,7 @@ def build_gemini_url():
 
     # اگر URL کامل داده نشده بود، از مدل و پایه استفاده می‌کنیم
     if not raw_url:
-        model_raw = getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash-lite').strip()
+        model_raw = getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash').strip()
         model = quote(model_raw, safe='')
         api_base = getattr(settings, 'GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
         raw_url = f"{api_base}/{model}"
@@ -100,9 +100,14 @@ def build_gemini_url():
     split = urlsplit(cleaned)
     path = quote(split.path, safe='/:')
 
-    # جایگزینی مدل‌های قدیمی 1.5 با مدل جدید پیکربندی‌شده (پیش‌فرض: gemini-2.5-flash-lite)
-    configured_model = quote(getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash-lite').strip(), safe='')
-    path = re.sub(r'gemini-1\.5[^/:]*', configured_model, path)
+    # جایگزینی مدل‌های قدیمی با مدل تنظیم‌شده (پیش‌فرض: gemini-2.5-flash)
+    configured_model = quote(getattr(settings, 'GEMINI_MODEL', 'gemini-2.5-flash').strip(), safe='')
+    legacy_patterns = [
+        r'gemini-1\.5[^/:]*',           # مدل‌های سری 1.5
+        r'gemini-2\.5-flash-lite[^/:]*', # مدل پیش‌فرض قدیمی
+    ]
+    for pattern in legacy_patterns:
+        path = re.sub(pattern, configured_model, path)
 
     # سازگاری با URLهای قدیمی که مدل -latest ندارند
     legacy_suffix = 'gemini-1.5-flash:generateContent'
