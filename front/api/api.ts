@@ -313,8 +313,26 @@ export interface FileStatusResponse {
     is_rejected: boolean;
 }
 
+export interface TaskProgressResponse {
+    success: boolean;
+    task_id: string;
+    state: string;
+    progress: number | string;
+    status: string;
+    is_completed: boolean;
+    is_failed: boolean;
+}
+
 export const checkFileStatus = async (audioId: number): Promise<FileStatusResponse> => {
     return Api.get<FileStatusResponse>(`/api/v1/files/audio/${audioId}/status/`);
+};
+
+export const getTaskProgress = async (taskId: string): Promise<TaskProgressResponse> => {
+    return Api.get<TaskProgressResponse>(`/api/v1/files/task/${taskId}/progress/`);
+};
+
+export const deleteAudioFile = async (uuid: string): Promise<IApiResponse> => {
+    return Api.delete<IApiResponse>(`/api/v1/files/audio/${uuid}/`);
 };
 
 // -----------------------------
@@ -326,6 +344,7 @@ export interface AudioTextGetResponse {
     file_name: string;
     status: string;
     original_text: string;
+    processed_text?: string;
     custom_text: string;
     has_custom_text: boolean;
     created_at: string;

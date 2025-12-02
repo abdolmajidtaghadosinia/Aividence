@@ -12,14 +12,27 @@ from django.shortcuts import get_object_or_404
 
 
 class AudioListView(generics.ListAPIView):
+    """Provide a summarized list of uploaded audio files for dashboard consumption."""
+
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = AudioListItemSerializer
 
     def get_queryset(self):
+        """Return the ordered queryset with subset relationship eagerly loaded."""
         return Audio.objects.select_related('subset').order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
+        """Return paginated audio items along with aggregate counts.
+
+        Args:
+            request (Request): DRF request carrying authentication context.
+            *args: Additional positional arguments passed by the viewset infrastructure.
+            **kwargs: Additional keyword arguments passed by the viewset infrastructure.
+
+        Returns:
+            Response: Collection of serialized audio items and summary metrics.
+        """
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
 

@@ -75,3 +75,5 @@ vine==5.1.0
 wcwidth==0.2.13
 python-docx
 reportlab
+arabic-reshaper
+python-bidi
