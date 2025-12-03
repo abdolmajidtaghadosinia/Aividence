@@ -144,7 +144,7 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                             <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-sky-100 shadow-sm border border-sky-200/30 bg-sky-500/15 animate-card" style={{ animationDelay: '180ms' }}>{toPersianDigits(totalFiles)} فایل</div>
                         </div>
                         <button
-                            onClick={() => navigate('/upload')}
+                            onClick={() => navigate('/upload', { state: { autoOpenPicker: true } })}
                             className="relative overflow-hidden flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef9f64] via-[#f0843c] to-[#f55d4e] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:shadow-2xl hover:-translate-y-0.5 hover-lift"
                         >
                             <span className="absolute inset-0 bg-gradient-to-r from-white/15 via-white/0 to-white/15" />

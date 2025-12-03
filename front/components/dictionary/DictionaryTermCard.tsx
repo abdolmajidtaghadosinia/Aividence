@@ -3,11 +3,20 @@ import { DictionaryTerm } from '../../types';
 import { CheckIcon, XIcon, EditIcon } from '../Icons';
 import { updateDictionaryTerm } from '../../api/api';
 
-const DictionaryTermCard: React.FC<{ term: DictionaryTerm }> = ({ term }) => {
+type DictionaryTermCardProps = {
+    term: DictionaryTerm;
+    onUpdate: (id: DictionaryTerm['id'], description: string) => void;
+};
+
+const DictionaryTermCard: React.FC<DictionaryTermCardProps> = ({ term, onUpdate }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [description, setDescription] = useState(term.description);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    React.useEffect(() => {
+        setDescription(term.description);
+    }, [term.description]);
 
     const handleSave = async () => {
         try {
@@ -15,9 +24,8 @@ const DictionaryTermCard: React.FC<{ term: DictionaryTerm }> = ({ term }) => {
             setError(null);
             
             // ارسال درخواست PUT برای به‌روزرسانی description
-            await updateDictionaryTerm(term.id, description);
-            
-            // به‌روزرسانی موفق
+            const updated = await updateDictionaryTerm(term.id, description);
+            onUpdate(term.id, updated.description);
             setIsEditing(false);
             console.log("Description updated successfully:", description);
         } catch (err: any) {
@@ -56,7 +64,9 @@ const DictionaryTermCard: React.FC<{ term: DictionaryTerm }> = ({ term }) => {
                 {isEditing ? (
                     <div className="flex gap-2">
                         <button onClick={handleCancel} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full" title="لغو"><XIcon className="w-5 h-5"/></button>
-                        <button onClick={handleSave} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full" title="ذخیره"><CheckIcon className="w-5 h-5"/></button>
+                        <button onClick={handleSave} disabled={isSaving} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full disabled:opacity-60" title="ذخیره">
+                            <CheckIcon className="w-5 h-5"/>
+                        </button>
                     </div>
                 ) : (
                     <button
@@ -68,6 +78,7 @@ const DictionaryTermCard: React.FC<{ term: DictionaryTerm }> = ({ term }) => {
                     </button>
                 )}
             </div>
+            {error && <p className="text-xs text-red-500 mt-2">{error}</p>}
         </div>
     );
 }
