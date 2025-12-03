@@ -296,7 +296,9 @@ export const updateDictionaryTerm = async (id: number, description: string): Pro
     return Api.put<DictionaryTerm>(`/api/v1/office/keyword/${id}/`, { description });
 };
 
-export const createDictionaryTerm = async (newTermData: DictionaryTerm): Promise<DictionaryTerm> => {
+export const createDictionaryTerm = async (
+    newTermData: Pick<DictionaryTerm, 'Keyword' | 'description' | 'subset'>
+): Promise<DictionaryTerm> => {
     return Api.post<DictionaryTerm>('/api/v1/office/keyword/', newTermData);
 };
 
