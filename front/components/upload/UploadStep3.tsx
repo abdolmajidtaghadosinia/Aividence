@@ -15,13 +15,32 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editedText, setEditedText] = useState(data.editedText || data.processedText || data.originalText || '');
     const [isSaving, setIsSaving] = useState(false);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
     React.useEffect(() => {
         setEditedText(data.editedText || data.processedText || data.originalText || '');
     }, [data.editedText, data.originalText, data.processedText]);
 
-    const handleSaveEditedText = (newText: string) => {
+    const handleSaveEditedText = async (newText: string) => {
         setEditedText(newText);
+        setSaveMessage(null);
+
+        if (!data.upload_uuid) {
+            setSaveMessage('شناسه فایل برای ذخیره در دسترس نیست.');
+            return;
+        }
+
+        setIsSavingEdit(true);
+        try {
+            await updateAudioTextByUuid(data.upload_uuid, newText);
+            setSaveMessage('تغییرات ذخیره شد و به عنوان متن نهایی در نظر گرفته می‌شود.');
+        } catch (error) {
+            console.error('Unable to persist final text', error);
+            setSaveMessage('خطا در ذخیره متن. لطفا دوباره تلاش کنید.');
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
     
     const persistEditedText = async () => {
@@ -56,6 +75,11 @@ const UploadStep3: React.FC<UploadStep3Props> = ({ onBack, onFinish, data }) => 
     return (
          <div className="flex-1 p-2">
              <h3 className="font-bold text-lg mb-6 text-center">بازبینی و تایید نهایی</h3>
+             {saveMessage && (
+                <div className={`mb-4 text-sm px-3 py-2 rounded-lg border ${isSavingEdit ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+                    {isSavingEdit ? 'در حال ذخیره تغییرات...' : saveMessage}
+                </div>
+             )}
              <div className="flex flex-col md:flex-row gap-8">
                  <div className="w-full md:w-1/3 md:border-l md:border-gray-200 md:pl-6">
                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">

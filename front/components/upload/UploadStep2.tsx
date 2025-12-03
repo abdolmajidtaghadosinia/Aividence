@@ -3,7 +3,7 @@ import { FileData } from '../../types';
 import FullScreenEditModal from './FullScreenEditModal';
 import { RefreshCwIcon, TrashIcon, CheckIcon, ArrowRightIcon, EditIcon, FileTypeIcon, FolderIcon } from '../Icons';
 import { toPersianDigits } from '../../constants';
-import { getAudioTextByUuid, getTaskProgress, reprocessAudio } from '../../api/api';
+import { getAudioTextByUuid, getTaskProgress, reprocessAudio, updateAudioTextByUuid } from '../../api/api';
 
 interface UploadStep2Props {
     onNext: (data: Partial<FileData>) => void;
@@ -15,6 +15,8 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
     const [progress, setProgress] = useState(0);
     const [localData, setLocalData] = useState(data);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isSavingEdit, setIsSavingEdit] = useState(false);
+    const [editSaveMessage, setEditSaveMessage] = useState<string | null>(null);
     const [isReprocessing, setIsReprocessing] = useState(false);
     const [reprocessStatus, setReprocessStatus] = useState<string | null>(null);
     const [taskId, setTaskId] = useState<string | null>(null);
@@ -104,8 +106,25 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
         setLocalData({ ...localData, [e.target.name]: e.target.value });
     };
 
-    const handleSaveEditedText = (newText: string) => {
+    const handleSaveEditedText = async (newText: string) => {
         setLocalData(prev => ({ ...prev, editedText: newText }));
+        setEditSaveMessage(null);
+
+        if (!localData.upload_uuid) {
+            setEditSaveMessage('شناسه فایل برای ذخیره در دسترس نیست.');
+            return;
+        }
+
+        setIsSavingEdit(true);
+        try {
+            await updateAudioTextByUuid(localData.upload_uuid, newText);
+            setEditSaveMessage('تغییرات با موفقیت ذخیره شد.');
+        } catch (error) {
+            console.error('Unable to persist edited text', error);
+            setEditSaveMessage('خطا در ذخیره متن. لطفا دوباره تلاش کنید.');
+        } finally {
+            setIsSavingEdit(false);
+        }
     };
 
     const handleReprocess = async () => {
@@ -144,6 +163,12 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
             {reprocessStatus && (
                 <div className="mb-4 text-sm text-gray-600">{reprocessStatus}</div>
             )}
+
+            {editSaveMessage && (
+                <div className={`mb-4 text-sm px-3 py-2 rounded-lg border ${isSavingEdit ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+                    {isSavingEdit ? 'در حال ذخیره تغییرات...' : editSaveMessage}
+                </div>
+            )}
             
             {progress === 100 ? (
                 <>
@@ -167,6 +192,15 @@ const UploadStep2: React.FC<UploadStep2Props> = ({ onNext, onBack, data }) => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">متن استخراج شده (فقط خواندنی)</label>
                         <div className="w-full h-64 p-3 bg-gray-100 border border-gray-300 rounded-lg overflow-y-auto leading-relaxed text-gray-800">
                            {localData.originalText || localData.processedText || ''}
+                        </div>
+                    </div>
+                    <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-700">پیش‌نمایش متن ویرایش‌شده</label>
+                            <span className="text-xs text-gray-500">در صورت خالی بودن، متن پردازش‌شده نمایش داده می‌شود</span>
+                        </div>
+                        <div className="w-full h-52 p-3 bg-white border border-sky-100 rounded-lg overflow-y-auto leading-relaxed text-gray-900 shadow-inner">
+                            {localData.editedText || localData.processedText || localData.originalText || 'متنی برای نمایش وجود ندارد.'}
                         </div>
                     </div>
                      <div className="mb-6">
