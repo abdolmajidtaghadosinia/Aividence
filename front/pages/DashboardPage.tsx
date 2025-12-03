@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
@@ -16,12 +16,15 @@ interface LayoutContext {
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { files, loading, error, refreshFiles, removeFile } = useFiles();
+    const { files, loading, error, refreshFiles, removeFile, recentlyAddedFileId, clearRecentlyAddedFile } = useFiles();
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
     const [confirmAction, setConfirmAction] = useState<{ type: 'cancel' | 'delete'; file: FileData } | null>(null);
     const [isActing, setIsActing] = useState(false);
     const [retryingId, setRetryingId] = useState<string | null>(null);
+    const [highlightedFileId, setHighlightedFileId] = useState<string | null>(null);
+    const listSectionRef = useRef<HTMLDivElement | null>(null);
+    const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
@@ -213,6 +216,32 @@ const DashboardPage: React.FC = () => {
         setSelectedFile(file);
     };
 
+    useEffect(() => {
+        if (!recentlyAddedFileId) return;
+
+        listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setHighlightedFileId(recentlyAddedFileId);
+    }, [recentlyAddedFileId]);
+
+    useEffect(() => {
+        if (!highlightedFileId) return;
+
+        const scrollTimeout = window.setTimeout(() => {
+            const targetRow = rowRefs.current[highlightedFileId];
+            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+
+        const clearTimeoutId = window.setTimeout(() => {
+            setHighlightedFileId(null);
+            clearRecentlyAddedFile();
+        }, 4000);
+
+        return () => {
+            clearTimeout(scrollTimeout);
+            clearTimeout(clearTimeoutId);
+        };
+    }, [highlightedFileId, filteredFiles, clearRecentlyAddedFile]);
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -267,7 +296,7 @@ const DashboardPage: React.FC = () => {
 
             <div className="grid xl:grid-cols-3 gap-6">
                 <div className="xl:col-span-2 space-y-6">
-                    <div className="glass-panel rounded-3xl p-6 animate-card">
+                    <div ref={listSectionRef} className="glass-panel rounded-3xl p-6 animate-card">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
                             <h3 className="text-lg font-bold text-slate-800">{`لیست فایل های صوتی${activeFilterText}`}</h3>
                             <button
@@ -309,9 +338,15 @@ const DashboardPage: React.FC = () => {
                                         filteredFiles.map((file, index) => {
                                             const summary = getSummaryLine(file);
                                             const { date, time } = formatPersianDateTime(file);
+                                            const isHighlighted = highlightedFileId === file.id;
 
                                             return (
-                                            <tr key={file.id} className="bg-white border-b hover:bg-gray-50 table-row-animate" style={{ animationDelay: `${index * 45}ms` }}>
+                                            <tr
+                                                key={file.id}
+                                                ref={(el) => { rowRefs.current[file.id] = el; }}
+                                                className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md' : ''}`}
+                                                style={{ animationDelay: `${index * 45}ms` }}
+                                            >
                                                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
                                                     <div className="truncate" title={file.name}>{file.name}</div>
                                                     <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>

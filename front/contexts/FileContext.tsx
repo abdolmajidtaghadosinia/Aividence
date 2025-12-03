@@ -12,6 +12,8 @@ interface FileContextType {
   removeFile: (fileId: string) => void;
   refreshFiles: () => Promise<void>;
   checkFileStatus: (fileId: string) => Promise<void>;
+  recentlyAddedFileId: string | null;
+  clearRecentlyAddedFile: () => void;
   loading: boolean;
   error: string | null;
 }
@@ -72,6 +74,7 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [files, setFiles] = useState<FileData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [recentlyAddedFileId, setRecentlyAddedFileId] = useState<string | null>(null);
   const previousFilesRef = useRef<Record<string, FileData>>({});
   const hasInitializedRef = useRef(false);
 
@@ -111,6 +114,11 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addFile = useCallback((file: FileData) => {
     setFiles(prevFiles => [file, ...prevFiles]);
+    setRecentlyAddedFileId(file.id);
+  }, []);
+
+  const clearRecentlyAddedFile = useCallback(() => {
+    setRecentlyAddedFileId(null);
   }, []);
 
   const removeFile = useCallback((fileId: string) => {
@@ -249,9 +257,11 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     removeFile,
     refreshFiles,
     checkFileStatus,
+    recentlyAddedFileId,
+    clearRecentlyAddedFile,
     loading,
     error
-  }), [files, addFile, getFileById, updateFile, removeFile, refreshFiles, checkFileStatus, loading, error]);
+  }), [files, addFile, getFileById, updateFile, removeFile, refreshFiles, checkFileStatus, recentlyAddedFileId, clearRecentlyAddedFile, loading, error]);
 
   return <FileContext.Provider value={value}>{children}</FileContext.Provider>;
 };

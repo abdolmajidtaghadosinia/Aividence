@@ -1,5 +1,5 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useFiles } from '../contexts/FileContext';
 import { useAuth } from '../contexts/AuthContext';
 import { FileData, FileStatus } from '../types';
@@ -8,8 +8,17 @@ import { toPersianDigits } from '../constants';
 
 const UploadPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { addFile } = useFiles();
     const { user } = useAuth();
+    const [shouldAutoOpenPicker, setShouldAutoOpenPicker] = useState(false);
+
+    useEffect(() => {
+        if ((location.state as { autoOpenPicker?: boolean } | null)?.autoOpenPicker) {
+            setShouldAutoOpenPicker(true);
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.pathname, location.state, navigate]);
 
     const handleUpload = (data: Partial<FileData>) => {
         if (user) {
@@ -53,7 +62,7 @@ const UploadPage: React.FC = () => {
                 </div>
             </div>
             <div className="neo-panel p-6 rounded-[28px] animate-soft-pop">
-                 <UploadStep1 onUpload={handleUpload} />
+                 <UploadStep1 onUpload={handleUpload} autoOpenPicker={shouldAutoOpenPicker} />
             </div>
         </div>
     );

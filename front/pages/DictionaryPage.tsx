@@ -45,6 +45,10 @@ const DictionaryPage: React.FC = () => {
         fetchDictionaryTerms();
     }, []);
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, subCollectionFilter]);
+
     const filteredTerms = useMemo(() => {
         return terms
             .filter(term => term.Keyword.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -64,15 +68,12 @@ const DictionaryPage: React.FC = () => {
             return;
         }
 
-        const newTermData: DictionaryTerm = {
-            id: Date.now(),
-            Keyword: newTerm,
-            description: newDescription,
-            subset: newSubCollection,
-        };
-
         try {
-            const createdTerm = await createDictionaryTerm(newTermData);
+            const createdTerm = await createDictionaryTerm({
+                Keyword: newTerm.trim(),
+                description: newDescription.trim(),
+                subset: newSubCollection.trim(),
+            });
             setTerms(prevTerms => [createdTerm, ...prevTerms]);
             setCurrentPage(1);
             setAddFormVisible(false);
@@ -83,6 +84,10 @@ const DictionaryPage: React.FC = () => {
         } catch (err: any) {
             setError(err.message || 'خطا در ایجاد عبارت جدید');
         }
+    };
+
+    const handleUpdateTerm = (id: DictionaryTerm['id'], description: string) => {
+        setTerms(prev => prev.map(term => term.id === id ? { ...term, description } : term));
     };
 
     if (loading) {
@@ -210,7 +215,7 @@ const DictionaryPage: React.FC = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {paginatedTerms.map(term => (
-                        <DictionaryTermCard key={term.id} term={term} />
+                        <DictionaryTermCard key={term.id} term={term} onUpdate={handleUpdateTerm} />
                     ))}
                 </div>
 

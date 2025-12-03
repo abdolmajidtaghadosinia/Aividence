@@ -4,10 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.viewsets import ModelViewSet
 from django.http import HttpResponse
+import functools
 import io
 import os
+import tempfile
 import zipfile
 from urllib.parse import quote
+from urllib.request import urlretrieve
 from office.models import KeywordList, AudioFileText
 from .serializers import KeywordListSerializer
 
@@ -80,6 +83,37 @@ class ExportCustomContentZipView(APIView):
 
         quoted = quote(filename)
         return f"attachment; filename*=UTF-8''{quoted}; filename=\"{filename}\""
+
+    @staticmethod
+    @functools.lru_cache(maxsize=1)
+    def _resolve_vazirmatn_font() -> str | None:
+        """Ensure a Persian-friendly font is available without bundling binaries.
+
+        Downloads Vazirmatn to a temp cache on first use so PDF exports can embed a
+        proper Persian font even when it is not installed system-wide. If the
+        download fails, the caller can fall back to system fonts.
+        """
+
+        download_url = os.environ.get(
+            "PDF_PERSIAN_FONT_URL",
+            "https://github.com/rastikerdar/vazirmatn/releases/download/v33.003/Vazirmatn-Regular.ttf",
+        )
+
+        cache_dir = os.path.join(tempfile.gettempdir(), "aividence_fonts")
+        font_path = os.path.join(cache_dir, "Vazirmatn-Regular.ttf")
+
+        if os.path.exists(font_path):
+            return font_path
+
+        try:
+            os.makedirs(cache_dir, exist_ok=True)
+            urlretrieve(download_url, font_path)
+            if os.path.exists(font_path):
+                return font_path
+        except Exception:
+            return None
+
+        return None
 
     def post(self, request):
         """Return a ZIP containing DOCX and PDF renderings of the custom or processed text.
@@ -179,20 +213,30 @@ class ExportCustomContentZipView(APIView):
             return Response({'detail': 'کتابخانه‌های arabic-reshaper و python-bidi برای ساخت PDF فارسی الزامی هستند.'}, status=500)
 
         # Register a Persian-friendly font when available for proper glyph rendering.
-        font_name = None
-        if pdfmetrics is not None and TTFont is not None:
-            for font_path in [
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
-                '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
-                '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',
-            ]:
-                if os.path.exists(font_path):
+        def _register_persian_font():
+            """Try to register a bundled or system font that supports Persian glyphs."""
+
+            if pdfmetrics is None or TTFont is None:
+                return None
+
+            preferred_fonts = [
+                (self._resolve_vazirmatn_font() or "", "Vazirmatn"),
+                ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "DejaVuSans"),
+                ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans"),
+                ("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "DejaVuSans"),
+            ]
+
+            for font_path, family in preferred_fonts:
+                if font_path and os.path.exists(font_path):
                     try:
-                        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
-                        font_name = 'DejaVuSans'
-                        break
+                        pdfmetrics.registerFont(TTFont(family, font_path))
+                        return family
                     except Exception:
                         continue
+
+            return None
+
+        font_name = _register_persian_font()
 
         def _prepare_rtl_text(text: str) -> str:
             """Return a display-ready RTL string when bidi helpers are available."""
