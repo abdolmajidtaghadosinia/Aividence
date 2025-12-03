@@ -9,6 +9,7 @@ import json
 import time
 import requests
 import logging
+from urllib.parse import urlparse, urlunparse
 from django.conf import settings
 from files.models import Audio
 from office.models import AudioFileText
@@ -16,6 +17,94 @@ from main.models import Prompt
 from celery import states
 
 logger = logging.getLogger(__name__)
+
+# پرامپت پیش‌فرض بر اساس نوع فایل
+DEFAULT_TYPE_PROMPTS = {
+    "S": "این متن را به یک صورت جلسه رسمی با بخش‌های خلاصه، تصمیمات و اقدامات تبدیل کن.",
+    "L": "این متن را به قالب درس آموخته با توضیح مسئله، اقدام انجام‌شده و نتیجه تبدیل کن.",
+}
+
+
+def get_prompt_text_for_audio(audio_instance):
+    """دریافت پرامپت مناسب بر اساس نوع فایل یا زیرمجموعه"""
+    prompt = None
+
+    try:
+        # ابتدا بر اساس زیرمجموعه فعلی (سازگاری با داده‌های موجود)
+        prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
+
+        # در صورت نبود پرامپت فعال، تلاش بر اساس عنوان نوع فایل (صورت‌جلسه، درس‌آموخته و ...)
+        if not prompt:
+            prompt = Prompt.objects.filter(
+                type__title__iexact=audio_instance.get_file_type_display(),
+                is_active=True,
+            ).first()
+    except Exception as e:
+        logger.warning(f"⚠️ خطا در دریافت پرامپت: {e}")
+
+    if prompt and prompt.content:
+        return prompt.content
+
+    # پرامپت پیش‌فرض متناسب با نوع فایل
+    if audio_instance and audio_instance.file_type in DEFAULT_TYPE_PROMPTS:
+        return DEFAULT_TYPE_PROMPTS[audio_instance.file_type]
+
+    # fallback عمومی
+    return "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+
+
+def build_hf_payload(prompt_text, content_file, audio_instance=None):
+    """ساخت payload برای Hugging Face Chat Completions همراه با متادیتا."""
+    meta = []
+    if audio_instance:
+        try:
+            meta.append(f"نوع فایل: {audio_instance.get_file_type_display()}")
+            meta.append(f"عنوان فایل: {audio_instance.name}")
+            if getattr(audio_instance, "subject", None):
+                meta.append(f"موضوع: {audio_instance.subject}")
+        except Exception:
+            pass
+
+    system_content = prompt_text.strip()
+    if meta:
+        system_content = f"{system_content}\n\n" + "\n".join(meta)
+
+    return {
+        "model": getattr(settings, 'HF_MODEL', 'Qwen/Qwen2.5-72B-Instruct'),
+        "messages": [
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": content_file},
+        ],
+        "max_tokens": 1024,
+        "temperature": 0.7,
+    }
+
+
+def resolve_hf_api_url(raw_url: str) -> str:
+    """Normalize Hugging Face endpoint to router chat completions."""
+    url = (raw_url or '').strip()
+    if not url:
+        raise RuntimeError("❌ HF_API_URL تنظیم نشده است")
+
+    parsed = urlparse(url)
+
+    scheme = parsed.scheme or 'https'
+    netloc = parsed.netloc or ''
+    path = parsed.path or ''
+
+    if 'api-inference.huggingface.co' in netloc:
+        netloc = netloc.replace('api-inference.huggingface.co', 'router.huggingface.co')
+
+    if 'router.huggingface.co' in netloc:
+        if '/v1/chat/completions' in path:
+            path = path[path.find('/v1/chat/completions'):]
+        elif '/chat/completions' in path:
+            path = '/v1' + path[path.find('/chat/completions'):]
+        else:
+            path = '/v1/chat/completions'
+
+    normalized = urlunparse((scheme, netloc, path or '/v1/chat/completions', '', '', ''))
+    return normalized.rstrip('/')
 
 
 def raise_task_failure(task, message, progress=0):
@@ -376,23 +465,22 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
                     update_audio_status(audio_id, 'E')
                     return {"error": "Invalid response from conversion status", "status": 'E'}
                 
-                # مرحله 4: پردازش متن با Gemini (اختیاری)
-                logger.info("🤖 مرحله 4: پردازش متن با Gemini")
+                # مرحله 4: پردازش متن با Hugging Face (اختیاری)
+                logger.info("🤖 مرحله 4: پردازش متن با Hugging Face")
                 full_text = text  # استفاده از متن خام به عنوان fallback
                 try:
-                    prompt = Prompt.objects.filter(type=audio_instance.subset, is_active=True).first()
-                    prompt_text = prompt.content if prompt else "این متن رو به یک صورت جلسه رسمی تبدیل کن"
+                    prompt_text = get_prompt_text_for_audio(audio_instance)
                     logger.info(f"📝 پرامپت استفاده شده: {prompt_text[:50]}...")
 
-                    processed_text = process_with_gemini(prompt_text, text)
+                    processed_text = process_with_huggingface(prompt_text, text, audio_instance)
                     if processed_text and processed_text.strip():
                         full_text = processed_text.strip()
-                        logger.info(f"✅ پردازش با Gemini تکمیل شد - متن ساختاریافته جایگزین شد (طول: {len(full_text)})")
+                        logger.info(f"✅ پردازش با Hugging Face تکمیل شد - متن ساختاریافته جایگزین شد (طول: {len(full_text)})")
                     else:
-                        logger.warning("⚠️ متن پردازش شده توسط Gemini خالی بود، از متن اصلی استفاده می‌شود")
+                        logger.warning("⚠️ متن پردازش شده توسط Hugging Face خالی بود، از متن اصلی استفاده می‌شود")
 
                 except Exception as e:
-                    logger.warning(f"⚠️ خطا در پردازش متن با Gemini، از متن اصلی استفاده می‌شود: {str(e)}")
+                    logger.warning(f"⚠️ خطا در پردازش متن با Hugging Face، از متن اصلی استفاده می‌شود: {str(e)}")
 
                 # مرحله 5: ذخیره در دیتابیس
                 logger.info("💾 مرحله 5: ذخیره در دیتابیس")
@@ -471,66 +559,61 @@ def transcribe_online(self, audio_name, audio_path, audio_id=None, language='fa'
 
 
 
-def process_with_gemini(prompt_text, content_file):
-    """پردازش متن خام با Gemini"""
+def process_with_huggingface(prompt_text, content_file, audio_instance=None):
+    """پردازش متن خام با Hugging Face Chat Completions"""
     import logging
+
     logger = logging.getLogger(__name__)
-    
-    url = settings.GEMINI_URL
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt_text + "\n " + content_file}
-                ]
-            }
-        ]
-    }
+    if not getattr(settings, 'HF_API_TOKEN', ''):
+        raise RuntimeError("❌ HF_API_TOKEN تنظیم نشده است")
+
+    url = resolve_hf_api_url(getattr(settings, 'HF_API_URL', ''))
+
+    payload = build_hf_payload(prompt_text, content_file, audio_instance)
     headers = {
-        'x-goog-api-key': settings.GEMINI_API_KEY,
-        'Content-Type': 'application/json'
+        'Authorization': f"Bearer {settings.HF_API_TOKEN}",
+        'Content-Type': 'application/json',
     }
-    
-    if not settings.GEMINI_API_KEY:
-        raise RuntimeError("❌ GEMINI_API_KEY تنظیم نشده است")
 
     try:
-        logger.info("ارسال درخواست به Gemini API")
+        safe_url = url.replace(settings.HF_API_TOKEN, "[redacted]") if settings.HF_API_TOKEN else url
+        logger.info(f"ارسال درخواست به Hugging Face API - URL: {safe_url}")
         resp = requests.post(url, headers=headers, json=payload, timeout=120)
         resp.raise_for_status()
-        
+
         data = resp.json()
-        
-        # بررسی ساختار پاسخ
-        if "candidates" not in data or not data["candidates"]:
-            raise RuntimeError("❌ ساختار پاسخ Gemini نامعتبر است")
-            
-        candidate = data["candidates"][0]
-        if "content" not in candidate or "parts" not in candidate["content"]:
-            raise RuntimeError("❌ ساختار محتوای Gemini نامعتبر است")
-            
-        parts = candidate["content"]["parts"]
-        if not parts or "text" not in parts[0]:
-            raise RuntimeError("❌ متن در پاسخ Gemini یافت نشد")
-            
-        result_text = parts[0]["text"].strip()
-        logger.info("پردازش متن با Gemini با موفقیت انجام شد")
+        if not isinstance(data, dict):
+            raise RuntimeError("❌ ساختار پاسخ Hugging Face نامعتبر است")
+
+        choices = data.get('choices')
+        if not choices:
+            raise RuntimeError("❌ متن در پاسخ Hugging Face یافت نشد")
+
+        message = choices[0].get('message') if isinstance(choices[0], dict) else None
+        if not message or 'content' not in message:
+            raise RuntimeError("❌ متن در پاسخ Hugging Face یافت نشد")
+
+        result_text = (message.get('content') or '').strip()
+        if not result_text:
+            raise RuntimeError("❌ متن پاسخ خالی است")
+
+        logger.info("پردازش متن با Hugging Face با موفقیت انجام شد")
         return result_text
-        
+
     except requests.exceptions.Timeout:
-        error_msg = "تایم‌اوت در ارتباط با Gemini API"
+        error_msg = "تایم‌اوت در ارتباط با Hugging Face API"
         logger.error(error_msg)
         raise RuntimeError(f"❌ {error_msg}")
     except requests.exceptions.ConnectionError:
-        error_msg = "خطا در اتصال به Gemini API"
+        error_msg = "خطا در اتصال به Hugging Face API"
         logger.error(error_msg)
         raise RuntimeError(f"❌ {error_msg}")
     except requests.exceptions.HTTPError as e:
-        error_msg = f"خطای HTTP از Gemini API: {e}"
+        error_msg = f"خطای HTTP از Hugging Face API: {e}"
         logger.error(error_msg)
         raise RuntimeError(f"❌ {error_msg}")
     except Exception as e:
-        error_msg = f"خطا در Gemini API: {e}"
+        error_msg = f"خطا در Hugging Face API: {e}"
         logger.error(error_msg)
         raise RuntimeError(f"❌ {error_msg}")
 

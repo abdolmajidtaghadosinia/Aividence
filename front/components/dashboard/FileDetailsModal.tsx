@@ -31,14 +31,14 @@ const FileDetailsModal: React.FC<FileDetailsModalProps> = ({ file, onClose }) =>
                         <div><strong className="text-gray-600">زیر مجموعه:</strong> <span className="text-gray-800">{file.subCollection}</span></div>
                         <div><strong className="text-gray-600">بارگذاری شده توسط:</strong> <span className="text-gray-800">{file.uploader}</span></div>
                     </div>
-                    {(file.editedText || file.originalText) && (
+                    {(file.editedText || file.processedText || file.originalText) && (
                         <div className="mt-6 space-y-4">
-                            {file.editedText && (
+                            {(file.editedText || file.processedText) && (
                                 <div>
                                     <h4 className="font-semibold text-gray-700 mb-2">متن نهایی تایید شده:</h4>
                                     <div className="text-gray-700 bg-green-50 p-4 rounded-lg border border-green-100 leading-relaxed">
                                         <StructuredTextPreview
-                                            text={file.editedText}
+                                            text={file.editedText || file.processedText}
                                             title={file.type || 'متن نهایی'}
                                             subject={file.name}
                                             dateValue={file.uploadDate}

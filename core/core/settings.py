@@ -211,8 +211,20 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 IO_TRANSCRIBE_URL = os.getenv('IO_TRANSCRIBE_URL', 'https://www.iotype.com/developer/transcription')
 IO_TRANSCRIBE_TOKEN = os.getenv('IO_TRANSCRIBE_TOKEN', '')
 IO_TRANSCRIBE_COOKIE = os.getenv('IO_TRANSCRIBE_COOKIE', '')
-GEMINI_URL = os.getenv('GEMINI_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent')
+# Gemini configuration
+# اگر GEMINI_URL به صورت کامل تنظیم نشده باشد، از ترکیب GEMINI_API_BASE و GEMINI_MODEL استفاده می‌کنیم
+GEMINI_URL = os.getenv('GEMINI_URL', '').strip()
+GEMINI_API_BASE = os.getenv('GEMINI_API_BASE', 'https://generativelanguage.googleapis.com/v1beta/models').rstrip('/')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash').strip()
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+
+# Hugging Face configuration برای پردازش متن
+HF_API_URL = os.getenv(
+    'HF_API_URL',
+    'https://router.huggingface.co/v1/chat/completions',
+).strip()
+HF_MODEL = os.getenv('HF_MODEL', 'Qwen/Qwen2.5-72B-Instruct').strip()
+HF_API_TOKEN = os.getenv('HF_API_TOKEN', '').strip()
 
 # تنظیمات بهینه‌سازی دیتابیس
 DATABASES['default']['CONN_MAX_AGE'] = 600  # 10 دقیقه
