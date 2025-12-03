@@ -234,6 +234,37 @@ class ApiService {
     postBlob(url: string, data: any = {}): Promise<Blob> {
         return this.request<Blob>('post', url, data, {}, 'blob');
     }
+
+    /**
+     * Send a POST request that returns a Blob while preserving response headers.
+     * Useful for downloads where filename comes from ``Content-Disposition``.
+     */
+    postBlobWithResponse(url: string, data: any = {}): Promise<AxiosResponse<Blob>> {
+        return new Promise((resolve, reject) => {
+            axios({ method: 'post', url, data, responseType: 'blob' })
+                .then(resolve)
+                .catch((error: IErrorResponse) => {
+                    const code = error?.response?.data?.data;
+                    if (code === "inactive" || code === "logout" || code === "ipBlock") {
+                        clearAuthTokens();
+                        setTimeout(() => redirectToLogin(), 500);
+                    }
+
+                    const errorMessage =
+                        error.response?.data?.message ||
+                        error.response?.data?.detail ||
+                        error.response?.data ||
+                        error.message ||
+                        'خطای نامشخص';
+
+                    reject({
+                        message: errorMessage,
+                        status: error.response?.status,
+                        data: error.response?.data
+                    });
+                });
+        });
+    }
 }
 
 const Api = new ApiService();
@@ -373,11 +404,31 @@ export const reprocessAudio = async (uuid: string): Promise<{ success: boolean; 
 // Office: Export custom content ZIP
 // -----------------------------
 export const exportCustomContentZip = async (audioId: number): Promise<void> => {
-    const blob = await Api.postBlob('/api/v1/office/export-custom-zip/', { audio_id: audioId });
-    const url = window.URL.createObjectURL(blob);
+    const response = await Api.postBlobWithResponse('/api/v1/office/export-custom-zip/', { audio_id: audioId });
+
+    const parseFilename = (disposition?: string | null): string | undefined => {
+        if (!disposition) return undefined;
+
+        const utf8Match = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+        if (utf8Match?.[1]) {
+            try {
+                return decodeURIComponent(utf8Match[1]);
+            } catch (e) {
+                return utf8Match[1];
+            }
+        }
+
+        const plainMatch = disposition.match(/filename="?([^";]+)"?/i);
+        return plainMatch?.[1];
+    };
+
+    const fallbackName = `custom_content_${audioId}.zip`;
+    const downloadName = parseFilename(response.headers['content-disposition']) || fallbackName;
+
+    const url = window.URL.createObjectURL(response.data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `custom_content_${audioId}.zip`;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     a.remove();
