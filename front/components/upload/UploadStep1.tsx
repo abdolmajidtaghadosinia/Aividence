@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_FILES, toPersianDigits } from '../../constants';
 import { ArrowRightIcon, ProcessingIcon, InfoIcon, FileTypeIcon, FolderIcon } from '../Icons';
@@ -7,9 +7,10 @@ import { getUploadFormData, UploadFormData, submitUploadForm } from '../../api/a
 
 interface UploadStep1Props {
     onUpload: (data: Partial<FileData>) => void;
+    autoOpenPicker?: boolean;
 }
 
-const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
+const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload, autoOpenPicker }) => {
     const [fileName, setFileName] = useState<string | null>(null);
     const [file, setFile] = useState<File | null>(null);
     const [dragActive, setDragActive] = useState(false);
@@ -18,6 +19,7 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
     const [error, setError] = useState<string | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const navigate = useNavigate();
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const formatSizeMb = (bytes: number) => toPersianDigits((bytes / (1024 * 1024)).toFixed(1));
 
@@ -40,6 +42,16 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
         };
         fetchFormData();
     }, []);
+
+    useEffect(() => {
+        if (autoOpenPicker && fileInputRef.current) {
+            const clickTimeout = window.setTimeout(() => {
+                fileInputRef.current?.click();
+            }, 150);
+
+            return () => window.clearTimeout(clickTimeout);
+        }
+    }, [autoOpenPicker]);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -177,7 +189,7 @@ const UploadStep1: React.FC<UploadStep1Props> = ({ onUpload }) => {
                                 <div className="flex text-sm text-gray-600">
                                     <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-sky-600 hover:text-sky-500">
                                         <span>انتخاب فایل صوتی</span>
-                                        <input id="file-upload" name="file" type="file" className="sr-only" onChange={handleChange} accept=".mp3,.wav" />
+                                        <input id="file-upload" name="file" type="file" className="sr-only" onChange={handleChange} accept=".mp3,.wav" ref={fileInputRef} />
                                     </label>
                                     <p className="pr-1">یا آن را اینجا بکشید</p>
                                 </div>
