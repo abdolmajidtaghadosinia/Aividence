@@ -384,14 +384,14 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[1040px] text-sm text-right text-gray-600 table-fixed">
+                            <table className="w-full min-w-[960px] text-sm text-right text-gray-600 table-auto relative">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 w-[230px]">نام فایل صوتی</th>
-                                        <th scope="col" className="px-6 py-3 w-[170px]">تاریخ</th>
-                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[140px]">نوع</th>
-                                        <th scope="col" className="px-6 py-3 w-[230px]">وضعیت</th>
-                                        <th scope="col" className="px-6 py-3 w-[240px]">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 w-[210px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 w-[150px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[130px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 w-[210px]">وضعیت</th>
+                                        <th scope="col" className="px-6 py-3 w-[210px] sticky right-0 bg-slate-50/90 backdrop-blur-sm border-l border-slate-200 z-10">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -482,8 +482,8 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 align-top w-[240px]">
-                                                            <div className="flex flex-col gap-3 min-w-[220px] max-w-[240px]">
+                                                        <td className="px-6 py-4 align-top w-[210px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1)]">
+                                                            <div className="flex flex-col gap-3 min-w-[210px]">
                                                                 {summary && (
                                                                     <p className="text-xs text-slate-600 max-w-[320px] truncate" title={summary}>
                                                                         {summary}
