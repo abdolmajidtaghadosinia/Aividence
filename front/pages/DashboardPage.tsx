@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
@@ -16,6 +16,7 @@ interface LayoutContext {
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { files, loading, error, refreshFiles, removeFile, recentlyAddedFileId, clearRecentlyAddedFile } = useFiles();
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
@@ -26,10 +27,19 @@ const DashboardPage: React.FC = () => {
     const listSectionRef = useRef<HTMLDivElement | null>(null);
     const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
+    const { state: locationState, pathname: currentPath } = location;
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
         setStatusFilter(status);
     };
+
+    useEffect(() => {
+        const state = locationState as { scrollToTop?: boolean } | null;
+        if (!state?.scrollToTop) return;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navigate(currentPath, { replace: true, state: { ...state, scrollToTop: false } });
+    }, [locationState, currentPath, navigate]);
 
     const openCancelModal = (file: FileData) => setConfirmAction({ type: 'cancel', file });
     const openDeleteModal = (file: FileData) => setConfirmAction({ type: 'delete', file });
