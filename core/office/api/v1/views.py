@@ -71,7 +71,7 @@ class ExportCustomContentZipView(APIView):
 
     @staticmethod
     def _derive_export_base_name(audio_text: AudioFileText) -> str:
-        """Return the original audio filename (without extension) when available."""
+        """Return the user-visible audio title (without extension) when available."""
 
         def _sanitize_component(value: str) -> str:
             cleaned = value.strip()
@@ -80,10 +80,17 @@ class ExportCustomContentZipView(APIView):
 
             return cleaned.replace("/", "-").replace("\\", "-")
 
+        # Prefer the explicit audio title the user chose.
         user_named = _sanitize_component(getattr(audio_text.file, "name", ""))
         if user_named:
             return user_named
 
+        # Fallback to the subject if the title is missing but subject is present.
+        subject_named = _sanitize_component(getattr(audio_text.file, "subject", ""))
+        if subject_named:
+            return subject_named
+
+        # Then try the uploaded file's base name.
         source_file_name = ""
         field_file = getattr(audio_text.file, "file", None)
         if field_file and getattr(field_file, "name", ""):
@@ -107,15 +114,17 @@ class ExportCustomContentZipView(APIView):
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
-    def _resolve_vazirmatn_font() -> str | None:
-        """Ensure a Persian-friendly font is available without bundling binaries.
+    def _resolve_vazirmatn_fonts() -> list[str]:
+        """Return candidate Vazirmatn font paths with a non-variable fallback.
 
-        Downloads Vazirmatn to a temp cache on first use so PDF exports can embed a
-        proper Persian font even when it is not installed system-wide. If the
-        download fails, the caller can fall back to system fonts.
+        ReportLab is often picky about variable fonts. To keep shaping stable, we
+        try the bundled variable file first and then download a static Regular
+        face into a temp cache so that registration can succeed even if the
+        variable font cannot be parsed.
         """
 
-        local_font_path = os.path.abspath(
+        candidates: list[str] = []
+        base_dir = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__),
                 "..",
@@ -123,12 +132,12 @@ class ExportCustomContentZipView(APIView):
                 "..",
                 "..",
                 "front",
-                "Vazirmatn-VariableFont_wght.ttf",
             )
         )
 
-        if os.path.exists(local_font_path):
-            return local_font_path
+        local_variable = os.path.join(base_dir, "Vazirmatn-VariableFont_wght.ttf")
+        if os.path.exists(local_variable):
+            candidates.append(local_variable)
 
         download_url = os.environ.get(
             "PDF_PERSIAN_FONT_URL",
@@ -136,20 +145,19 @@ class ExportCustomContentZipView(APIView):
         )
 
         cache_dir = os.path.join(tempfile.gettempdir(), "aividence_fonts")
-        font_path = os.path.join(cache_dir, "Vazirmatn-Regular.ttf")
+        os.makedirs(cache_dir, exist_ok=True)
+        cached_regular = os.path.join(cache_dir, "Vazirmatn-Regular.ttf")
 
-        if os.path.exists(font_path):
-            return font_path
+        if not os.path.exists(cached_regular):
+            try:
+                urlretrieve(download_url, cached_regular)
+            except Exception:
+                cached_regular = ""
 
-        try:
-            os.makedirs(cache_dir, exist_ok=True)
-            urlretrieve(download_url, font_path)
-            if os.path.exists(font_path):
-                return font_path
-        except Exception:
-            return None
+        if cached_regular and os.path.exists(cached_regular):
+            candidates.append(cached_regular)
 
-        return None
+        return candidates
 
     def post(self, request):
         """Return a ZIP containing DOCX and PDF renderings of the custom or processed text.
@@ -284,12 +292,18 @@ class ExportCustomContentZipView(APIView):
             if pdfmetrics is None or TTFont is None:
                 return None
 
-            preferred_fonts = [
-                (self._resolve_vazirmatn_font() or "", "Vazirmatn"),
-                ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "DejaVuSans"),
-                ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans"),
-                ("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "DejaVuSans"),
-            ]
+            preferred_fonts = []
+
+            for font_path in self._resolve_vazirmatn_fonts():
+                preferred_fonts.append((font_path, "Vazirmatn"))
+
+            preferred_fonts.extend(
+                [
+                    ("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "DejaVuSans"),
+                    ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", "DejaVuSans"),
+                    ("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", "DejaVuSans"),
+                ]
+            )
 
             for font_path, family in preferred_fonts:
                 if font_path and os.path.exists(font_path):
@@ -339,12 +353,14 @@ class ExportCustomContentZipView(APIView):
             wordWrap="RTL",
             allowOrphans=0,
             allowWidows=0,
+            rightIndent=0,
+            leftIndent=0,
         )
 
         story = []
         for paragraph in content.splitlines() or [""]:
             prepared = _prepare_rtl_text(paragraph)
-            story.append(Paragraph(prepared, persian_style))
+            story.append(Paragraph(prepared, persian_style, encoding="utf-8"))
             story.append(Spacer(1, 8))
 
         doc.build(story)
