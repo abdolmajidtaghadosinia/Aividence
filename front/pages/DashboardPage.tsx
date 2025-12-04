@@ -424,11 +424,11 @@ const DashboardPage: React.FC = () => {
                                                         className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md new-row-highlight' : ''}`}
                                                         style={{ animationDelay: `${index * 45}ms` }}
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[200px]">
+                                                        <td className="px-5 py-6 font-medium text-gray-900 whitespace-nowrap max-w-[200px] align-top">
                                                             <div className="truncate" title={file.name}>{file.name}</div>
                                                             <div className="text-xs text-slate-500 mt-1">{`توسط ${file.uploader || 'ادمین'}`}</div>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[150px]">
+                                                        <td className="px-4 py-6 align-top w-[150px]">
                                                             <div className="space-y-1 text-[13px] text-slate-700">
                                                                 <div className="font-semibold">{date && toPersianDigits(date)}</div>
                                                                 {time && (
@@ -436,7 +436,7 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 hidden md:table-cell align-top w-[120px]">
+                                                        <td className="px-4 py-6 hidden md:table-cell align-top w-[120px]">
                                                             <span
                                                                 className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
                                                                 style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
@@ -445,7 +445,7 @@ const DashboardPage: React.FC = () => {
                                                                 {file.type}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[170px]">
+                                                        <td className="px-4 py-6 align-top w-[170px]">
                                                             <div className="space-y-2 max-w-[170px]">
                                                                 {renderStatusBadge(file.status)}
                                                                 {file.status === FileStatus.Processing && (
@@ -482,50 +482,57 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[190px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1)]">
-                                                            <div className="flex flex-col gap-3 min-w-[190px] max-w-[190px]">
+                                                        <td className="px-4 py-6 align-top w-[210px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1)]">
+                                                            <div className="flex flex-col gap-4 min-w-[210px] max-w-[210px]">
                                                                 {summary && (
                                                                     <p className="text-xs text-slate-600 truncate" title={summary}>
                                                                         {summary}
                                                                     </p>
                                                                 )}
-                                                                <div className="flex flex-wrap items-center gap-2 justify-start">
+                                                                <div className="flex flex-col gap-2">
                                                                     <button
                                                                         onClick={() => handleViewClick(file)}
-                                                                        className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                                                         title="مشاهده جزئیات"
                                                                         disabled={file.status === FileStatus.Processing}
                                                                     >
-                                                                        <EyeIcon className="w-5 h-5"/>
+                                                                        <span>مشاهده</span>
+                                                                        <EyeIcon className="w-5 h-5" />
                                                                     </button>
-                                                                    <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
+                                                                    <button
+                                                                        onClick={() => exportCustomContentZip(file.id)}
+                                                                        disabled={file.status !== FileStatus.Approved}
+                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        title="دانلود"
+                                                                    >
+                                                                        <span>دانلود</span>
                                                                         <DownloadIcon className="w-5 h-5" />
                                                                     </button>
-                                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
-                                                                        <button
-                                                                            onClick={() => openCancelModal(file)}
-                                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
-                                                                            title="توقف و حذف از صف"
-                                                                        >
-                                                                            <StopIcon className="w-5 h-5" />
-                                                                        </button>
-                                                                    )}
-                                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
-                                                                        <button
-                                                                            onClick={() => openDeleteModal(file)}
-                                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
-                                                                            title="حذف آیتم"
-                                                                        >
-                                                                            <TrashIcon className="w-5 h-5" />
-                                                                        </button>
-                                                                    )}
+                                                                    <button
+                                                                        onClick={() => openCancelModal(file)}
+                                                                        disabled={!(file.status === FileStatus.Processing || file.status === FileStatus.Pending)}
+                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        title="توقف و حذف از صف"
+                                                                    >
+                                                                        <span>توقف و حذف از صف</span>
+                                                                        <StopIcon className="w-5 h-5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => openDeleteModal(file)}
+                                                                        disabled={file.status === FileStatus.Processing || file.status === FileStatus.Pending}
+                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        title="حذف آیتم"
+                                                                    >
+                                                                        <span>حذف</span>
+                                                                        <TrashIcon className="w-5 h-5" />
+                                                                    </button>
                                                                     {file.status === FileStatus.Pending && (
                                                                         <button
                                                                             onClick={() => togglePreview(file)}
-                                                                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition"
+                                                                            className="inline-flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-indigo-700 bg-white border border-indigo-100 rounded-lg hover:bg-indigo-50 transition"
                                                                             type="button"
                                                                         >
-                                                                            {previewState?.expanded ? 'بستن خلاصه' : 'مشاهده خلاصه'}
+                                                                            <span>{previewState?.expanded ? 'بستن خلاصه' : 'مشاهده خلاصه'}</span>
                                                                             <span className={`transition-transform ${previewState?.expanded ? 'rotate-180' : ''}`}>
                                                                                 ▾
                                                                             </span>
