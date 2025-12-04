@@ -384,14 +384,14 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         <div className="overflow-x-auto relative">
-                            <table className="w-full text-sm text-right text-gray-600 table-auto min-w-[980px]">
+                            <table className="w-full text-sm text-right text-gray-600 table-auto min-w-[880px]">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 w-[22%] min-w-[140px]">نام فایل صوتی</th>
-                                        <th scope="col" className="px-6 py-3 w-[16%] min-w-[120px]">تاریخ</th>
-                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[12%] min-w-[90px]">نوع</th>
-                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[140px]">وضعیت</th>
-                                        <th scope="col" className="px-6 py-3 w-[32%] min-w-[220px]">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 w-[20%] min-w-[140px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 w-[14%] min-w-[110px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[10%] min-w-[80px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 w-[16%] min-w-[120px]">وضعیت</th>
+                                        <th scope="col" className="px-6 py-3 w-[30%] min-w-[210px]">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -424,7 +424,7 @@ const DashboardPage: React.FC = () => {
                                                         className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md new-row-highlight' : ''}`}
                                                         style={{ animationDelay: `${index * 45}ms` }}
                                                     >
-                                                        <td className="px-5 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[200px] align-top">
+                                                        <td className="px-5 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[180px] align-top">
                                                             <div className="truncate" title={file.name}>{file.name}</div>
                                                             <div className="text-xs text-slate-500 mt-1">{`توسط ${file.uploader || 'ادمین'}`}</div>
                                                         </td>
@@ -436,7 +436,7 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 hidden md:table-cell align-top w-[120px]">
+                                                        <td className="px-4 py-4 hidden md:table-cell align-top w-[110px]">
                                                             <span
                                                                 className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
                                                                 style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
@@ -445,8 +445,8 @@ const DashboardPage: React.FC = () => {
                                                                 {file.type}
                                                             </span>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[170px]">
-                                                            <div className="space-y-2 max-w-[170px]">
+                                                        <td className="px-4 py-4 align-top w-[150px]">
+                                                            <div className="space-y-2 max-w-[150px]">
                                                                 {renderStatusBadge(file.status)}
                                                                 {file.status === FileStatus.Processing && (
                                                                     <div className="space-y-1">
@@ -482,10 +482,10 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[230px] max-w-[260px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
-                                                            <div className="flex flex-col gap-3 min-w-[220px]">
+                                                        <td className="px-3 py-4 align-top w-[210px] max-w-[220px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
+                                                            <div className="flex flex-col gap-3 min-w-[210px]">
                                                                 {summary && (
-                                                                    <p className="text-xs text-slate-600 line-clamp-2" title={summary}>
+                                                                    <p className="text-xs text-slate-600 line-clamp-1" title={summary}>
                                                                         {summary}
                                                                     </p>
                                                                 )}
