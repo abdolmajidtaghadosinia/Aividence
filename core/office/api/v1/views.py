@@ -104,6 +104,21 @@ class ExportCustomContentZipView(APIView):
         download fails, the caller can fall back to system fonts.
         """
 
+        local_font_path = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "..",
+                "front",
+                "Vazirmatn-VariableFont_wght.ttf",
+            )
+        )
+
+        if os.path.exists(local_font_path):
+            return local_font_path
+
         download_url = os.environ.get(
             "PDF_PERSIAN_FONT_URL",
             "https://github.com/rastikerdar/vazirmatn/releases/download/v33.003/Vazirmatn-Regular.ttf",
