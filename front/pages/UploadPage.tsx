@@ -37,7 +37,7 @@ const UploadPage: React.FC = () => {
                 duration: Math.floor(Math.random() * 500) + 100
             };
             addFile(newFile);
-            navigate('/dashboard');
+            navigate('/dashboard', { state: { scrollToTop: true } });
         }
     };
 

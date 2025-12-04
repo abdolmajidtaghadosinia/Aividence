@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { FileStatus, FileData } from '../types';
 import { STATUS_STYLES, toPersianDigits } from '../constants';
 import { useFiles } from '../contexts/FileContext';
@@ -16,6 +16,7 @@ interface LayoutContext {
 
 const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { files, loading, error, refreshFiles, removeFile, recentlyAddedFileId, clearRecentlyAddedFile } = useFiles();
     const [statusFilter, setStatusFilter] = useState<FileStatus | 'all'>('all');
     const [selectedFile, setSelectedFile] = useState<FileData | null>(null);
@@ -26,10 +27,19 @@ const DashboardPage: React.FC = () => {
     const listSectionRef = useRef<HTMLDivElement | null>(null);
     const rowRefs = useRef<Record<string, HTMLTableRowElement | null>>({});
     const { headerSearchTerm } = useOutletContext<LayoutContext>();
+    const { state: locationState, pathname: currentPath } = location;
 
     const handleStatusFilterChange = (status: FileStatus | 'all') => {
         setStatusFilter(status);
     };
+
+    useEffect(() => {
+        const state = locationState as { scrollToTop?: boolean } | null;
+        if (!state?.scrollToTop) return;
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        navigate(currentPath, { replace: true, state: { ...state, scrollToTop: false } });
+    }, [locationState, currentPath, navigate]);
 
     const openCancelModal = (file: FileData) => setConfirmAction({ type: 'cancel', file });
     const openDeleteModal = (file: FileData) => setConfirmAction({ type: 'delete', file });
@@ -105,6 +115,8 @@ const DashboardPage: React.FC = () => {
         rejected: files.filter(f => f.status === FileStatus.Rejected).length,
     }), [files]);
 
+    const hasProcessing = stats.processing > 0;
+
     const subsetStats = useMemo(() => {
         const map: Record<string, { total: number; approved: number; processing: number }> = {};
         files.forEach((file) => {
@@ -166,8 +178,10 @@ const DashboardPage: React.FC = () => {
         };
     };
 
-    const getSummaryLine = (file: FileData) => {
-        const content = file.processedText || file.editedText || file.originalText;
+    const getSummaryLine = (fileOrText: FileData | string | undefined | null) => {
+        const content = typeof fileOrText === 'string'
+            ? fileOrText
+            : fileOrText?.processedText || fileOrText?.editedText || fileOrText?.originalText;
         if (!content) return '';
         const normalized = content.replace(/\s+/g, ' ').trim();
         return normalized.length > 90 ? `${normalized.slice(0, 90)}…` : normalized;
@@ -216,10 +230,70 @@ const DashboardPage: React.FC = () => {
         setSelectedFile(file);
     };
 
+    const [previewStates, setPreviewStates] = useState<Record<string, { expanded: boolean; loading: boolean; text: string | null; error: string | null }>>({});
+
+    const togglePreview = async (file: FileData) => {
+        const current = previewStates[file.id];
+        const nextExpanded = !current?.expanded;
+
+        if (!nextExpanded) {
+            setPreviewStates(prev => ({ ...prev, [file.id]: { ...current, expanded: false } }));
+            return;
+        }
+
+        const cachedText = current?.text;
+        if (cachedText) {
+            setPreviewStates(prev => ({ ...prev, [file.id]: { ...current, expanded: true, error: null } }));
+            return;
+        }
+
+        setPreviewStates(prev => ({
+            ...prev,
+            [file.id]: { expanded: true, loading: true, text: null, error: null },
+        }));
+
+        try {
+            let content = file.processedText || file.editedText || file.originalText || '';
+
+            if (!content && file.upload_uuid) {
+                const res = await getAudioTextByUuid(file.upload_uuid);
+                content = res.processed_text || res.custom_text || res.original_text || '';
+            }
+
+            setPreviewStates(prev => ({
+                ...prev,
+                [file.id]: {
+                    expanded: true,
+                    loading: false,
+                    text: content || null,
+                    error: content ? null : 'متنی برای نمایش وجود ندارد',
+                },
+            }));
+        } catch (err) {
+            console.error('Unable to load preview text', err);
+            setPreviewStates(prev => ({
+                ...prev,
+                [file.id]: {
+                    expanded: true,
+                    loading: false,
+                    text: null,
+                    error: 'امکان دریافت خلاصه متن وجود ندارد',
+                },
+            }));
+        }
+    };
+
     useEffect(() => {
         if (!recentlyAddedFileId) return;
 
-        listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const listTop = listSectionRef.current?.getBoundingClientRect().top;
+        if (typeof listTop === 'number') {
+            const scrollTarget = window.scrollY + listTop - 40;
+            window.scrollTo({ top: Math.max(scrollTarget, 0), behavior: 'smooth' });
+        } else {
+            listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         setHighlightedFileId(recentlyAddedFileId);
     }, [recentlyAddedFileId]);
 
@@ -228,7 +302,7 @@ const DashboardPage: React.FC = () => {
 
         const scrollTimeout = window.setTimeout(() => {
             const targetRow = rowRefs.current[highlightedFileId];
-            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
         }, 100);
 
         const clearTimeoutId = window.setTimeout(() => {
@@ -272,15 +346,25 @@ const DashboardPage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-                <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
-                <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
-                <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
-                <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
-                <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
+        <div className="relative">
+            <div
+                className={`pointer-events-none absolute inset-[-32px] lg:inset-[-48px] overflow-hidden rounded-[40px] transition-opacity duration-700 ease-out ${hasProcessing ? 'opacity-80' : 'opacity-0'}`}
+                aria-hidden
+            >
+                <div className="processing-aurora absolute inset-0" />
+                <div className="processing-aurora-alt absolute inset-0" />
+                <div className="processing-grain absolute inset-0" />
             </div>
+
+            <div className="relative space-y-6">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
+                    <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
+                    <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
+                    <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
+                    <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
+                </div>
 
             {stats.processing > 0 && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">
@@ -336,117 +420,154 @@ const DashboardPage: React.FC = () => {
                                         </tr>
                                     ) : (
                                         filteredFiles.map((file, index) => {
-                                            const summary = getSummaryLine(file);
+                                            const previewState = previewStates[file.id];
+                                            const summarySource = previewState?.text || file;
+                                            const summary = getSummaryLine(summarySource);
                                             const { date, time } = formatPersianDateTime(file);
                                             const isHighlighted = highlightedFileId === file.id;
 
                                             return (
-                                            <tr
-                                                key={file.id}
-                                                ref={(el) => { rowRefs.current[file.id] = el; }}
-                                                className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md' : ''}`}
-                                                style={{ animationDelay: `${index * 45}ms` }}
-                                            >
-                                                <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
-                                                    <div className="truncate" title={file.name}>{file.name}</div>
-                                                    <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
-                                                </td>
-                                                <td className="px-6 py-4 align-top">
-                                                    <div className="space-y-1 text-[13px] text-slate-700">
-                                                        <div className="font-semibold">{date && toPersianDigits(date)}</div>
-                                                        {time && (
-                                                            <div className="text-xs text-slate-500">آخرین تغییر: {toPersianDigits(time)}</div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 hidden md:table-cell align-top">
-                                                    <span
-                                                        className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
-                                                        style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
-                                                        title={file.type}
+                                                <React.Fragment key={file.id}>
+                                                    <tr
+                                                        ref={(el) => { rowRefs.current[file.id] = el; }}
+                                                        className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md new-row-highlight' : ''}`}
+                                                        style={{ animationDelay: `${index * 45}ms` }}
                                                     >
-                                                        {file.type}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="space-y-2">
-                                                        {renderStatusBadge(file.status)}
-                                                        {file.status === FileStatus.Processing && (
-                                                            <div className="space-y-1">
-                                                                <div className="flex items-center justify-between text-[11px] text-slate-500">
-                                                                    <span className="truncate max-w-[180px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
-                                                                        {file.progressLabel || 'در حال ترنسکرایب...'}
-                                                                    </span>
-                                                                    <span className="font-bold text-slate-800">
-                                                                        {toPersianDigits(Math.round(file.progress ?? 0))}%
-                                                                    </span>
-                                                                </div>
-                                                                <div className="w-full h-2.5 bg-indigo-50 rounded-full overflow-hidden border border-indigo-100/60 shadow-inner">
-                                                                    <div
-                                                                        className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700"
-                                                                        style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}
-                                                                    ></div>
-                                                                </div>
+                                                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
+                                                            <div className="truncate" title={file.name}>{file.name}</div>
+                                                            <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4 align-top">
+                                                            <div className="space-y-1 text-[13px] text-slate-700">
+                                                                <div className="font-semibold">{date && toPersianDigits(date)}</div>
+                                                                {time && (
+                                                                    <div className="text-xs text-slate-500">آخرین تغییر: {toPersianDigits(time)}</div>
+                                                                )}
                                                             </div>
-                                                        )}
-                                                        {file.status === FileStatus.ServiceUnavailable && (
-                                                            <div className="space-y-2">
-                                                                <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 leading-6">
-                                                                    سرویس پردازش در دسترس نیست. لطفاً چند دقیقه دیگر تلاش کنید.
-                                                                </div>
-                                                                <button
-                                                                    onClick={() => handleRetryProcessing(file)}
-                                                                    className="w-full text-center text-[13px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded-xl py-2 hover:bg-amber-200 transition disabled:opacity-50"
-                                                                    disabled={retryingId === file.id}
-                                                                >
-                                                                    {retryingId === file.id ? 'در حال تلاش مجدد...' : 'تلاش دوباره برای پردازش'}
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col gap-2">
-                                                        {summary && (
-                                                            <p className="text-xs text-slate-500 max-w-[260px] truncate" title={summary}>
-                                                                {summary}
-                                                            </p>
-                                                        )}
-                                                        <div className="flex items-center gap-x-2">
-                                                            <button
-                                                                onClick={() => handleViewClick(file)}
-                                                                className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
-                                                                title="مشاهده جزئیات"
-                                                                disabled={file.status === FileStatus.Processing}
+                                                        </td>
+                                                        <td className="px-6 py-4 hidden md:table-cell align-top">
+                                                            <span
+                                                                className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
+                                                                style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
+                                                                title={file.type}
                                                             >
-                                                                <EyeIcon className="w-5 h-5"/>
-                                                            </button>
-                                                            <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
-                                                                <DownloadIcon className="w-5 h-5" />
-                                                            </button>
-                                                            {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
-                                                                <button
-                                                                    onClick={() => openCancelModal(file)}
-                                                                    className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
-                                                                    title="توقف و حذف از صف"
-                                                                >
-                                                                    <StopIcon className="w-5 h-5" />
-                                                                </button>
-                                                            )}
-                                                            {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
-                                                                <button
-                                                                    onClick={() => openDeleteModal(file)}
-                                                                    className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
-                                                                    title="حذف آیتم"
-                                                                >
-                                                                    <TrashIcon className="w-5 h-5" />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
+                                                                {file.type}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="space-y-2">
+                                                                {renderStatusBadge(file.status)}
+                                                                {file.status === FileStatus.Processing && (
+                                                                    <div className="space-y-1">
+                                                                        <div className="flex items-center justify-between text-[11px] text-slate-500">
+                                                                            <span className="truncate max-w-[180px]" title={file.progressLabel || 'در حال ترنسکرایب...'}>
+                                                                                {file.progressLabel || 'در حال ترنسکرایب...'}
+                                                                            </span>
+                                                                            <span className="font-bold text-slate-800">
+                                                                                {toPersianDigits(Math.round(file.progress ?? 0))}%
+                                                                            </span>
+                                                                        </div>
+                                                                        <div className="w-full h-2.5 bg-indigo-50 rounded-full overflow-hidden border border-indigo-100/60 shadow-inner">
+                                                                            <div
+                                                                                className="h-full rounded-full bg-gradient-to-r from-indigo-400 via-sky-400 to-cyan-300 transition-all duration-700"
+                                                                                style={{ width: `${Math.min(Math.max(file.progress ?? 5, 5), 100)}%` }}
+                                                                            ></div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {file.status === FileStatus.ServiceUnavailable && (
+                                                                    <div className="space-y-2">
+                                                                        <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 leading-6">
+                                                                            سرویس پردازش در دسترس نیست. لطفاً چند دقیقه دیگر تلاش کنید.
+                                                                        </div>
+                                                                        <button
+                                                                            onClick={() => handleRetryProcessing(file)}
+                                                                            className="w-full text-center text-[13px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 rounded-xl py-2 hover:bg-amber-200 transition disabled:opacity-50"
+                                                                            disabled={retryingId === file.id}
+                                                                        >
+                                                                            {retryingId === file.id ? 'در حال تلاش مجدد...' : 'تلاش دوباره برای پردازش'}
+                                                                        </button>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col gap-2">
+                                                                {summary && (
+                                                                    <p className="text-xs text-slate-600 max-w-[280px] truncate" title={summary}>
+                                                                        {summary}
+                                                                    </p>
+                                                                )}
+                                                                <div className="flex items-center gap-x-2">
+                                                                    <button
+                                                                        onClick={() => handleViewClick(file)}
+                                                                        className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"
+                                                                        title="مشاهده جزئیات"
+                                                                        disabled={file.status === FileStatus.Processing}
+                                                                    >
+                                                                        <EyeIcon className="w-5 h-5"/>
+                                                                    </button>
+                                                                    <button onClick={() => exportCustomContentZip(file.id)} disabled={file.status !== FileStatus.Approved} className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed" title="دانلود">
+                                                                        <DownloadIcon className="w-5 h-5" />
+                                                                    </button>
+                                                                    {(file.status === FileStatus.Processing || file.status === FileStatus.Pending) && (
+                                                                        <button
+                                                                            onClick={() => openCancelModal(file)}
+                                                                            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-md hover:bg-amber-50 transition"
+                                                                            title="توقف و حذف از صف"
+                                                                        >
+                                                                            <StopIcon className="w-5 h-5" />
+                                                                        </button>
+                                                                    )}
+                                                                    {file.status !== FileStatus.Processing && file.status !== FileStatus.Pending && (
+                                                                        <button
+                                                                            onClick={() => openDeleteModal(file)}
+                                                                            className="p-1.5 text-rose-600 hover:text-rose-700 rounded-md hover:bg-rose-50 transition"
+                                                                            title="حذف آیتم"
+                                                                        >
+                                                                            <TrashIcon className="w-5 h-5" />
+                                                                        </button>
+                                                                    )}
+                                                                    {file.status === FileStatus.Pending && (
+                                                                        <button
+                                                                            onClick={() => togglePreview(file)}
+                                                                            className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition"
+                                                                            type="button"
+                                                                        >
+                                                                            {previewState?.expanded ? 'بستن خلاصه' : 'مشاهده خلاصه'}
+                                                                            <span className={`transition-transform ${previewState?.expanded ? 'rotate-180' : ''}`}>
+                                                                                ▾
+                                                                            </span>
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                    {file.status === FileStatus.Pending && previewState?.expanded && (
+                                                        <tr className="bg-slate-50/50">
+                                                            <td colSpan={5} className="px-6 pb-6 pt-2">
+                                                                <div className="rounded-2xl border border-indigo-100 bg-white/70 shadow-inner px-4 py-3 text-sm text-slate-700">
+                                                                    {previewState.loading && (
+                                                                        <div className="flex items-center gap-2 text-indigo-600">
+                                                                            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                                                            <span>در حال آماده‌سازی خلاصه...</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {previewState.error && (
+                                                                        <div className="text-rose-600 font-semibold">{previewState.error}</div>
+                                                                    )}
+                                                                    {!previewState.loading && !previewState.error && previewState.text && (
+                                                                        <p className="whitespace-pre-line leading-7 text-right line-clamp-2">
+                                                                            {previewState.text.trim()}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </React.Fragment>
+                                            );
                                         })
                                     )}
                                 </tbody>
@@ -569,6 +690,8 @@ const DashboardPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
+            </div>
+
             </div>
 
             {selectedFile && <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} />}

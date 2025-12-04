@@ -2,12 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { useFiles } from '../contexts/FileContext';
-import { FileStatus } from '../types';
-import { toPersianDigits } from '../constants';
 import { UserIcon, LogoutIcon, ChevronDownIcon, BellIcon, SearchIcon, UploadIcon, LockIcon } from './Icons';
 import LogoutModal from './LogoutModal';
-import Logo from './Logo';
 
 /**
  * Dropdown panel presenting account actions for the authenticated user.
@@ -41,7 +37,6 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const { files } = useFiles();
 
     const [isProfileOpen, setProfileOpen] = useState(false);
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
@@ -52,11 +47,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const handleLogout = () => {
         logout(() => navigate('/login'));
     };
-
-    const totalFiles = files.length;
-    const processingCount = files.filter(f => f.status === FileStatus.Processing).length;
-    const approvedCount = files.filter(f => f.status === FileStatus.Approved).length;
-    const rejectedCount = files.filter(f => f.status === FileStatus.Rejected).length;
 
     return (
         <>
@@ -86,7 +76,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <h1 className="text-3xl font-black text-white">داشبورد مدیریت عملیات</h1>
-                                    <span className="rounded-2xl bg-gradient-to-r from-[#1f2937] via-[#0f172a] to-[#0b1224] px-3 py-1 text-[11px] font-bold text-amber-200 shadow-inner border border-white/5">نسخه پیشرفته</span>
                                 </div>
                             </div>
                         </div>
@@ -138,11 +127,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-amber-100 shadow-sm border border-amber-200/30 bg-amber-500/15 animate-card" style={{ animationDelay: '60ms' }}>{toPersianDigits(processingCount)} در حال پردازش</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-emerald-100 shadow-sm border border-emerald-200/30 bg-emerald-500/15 animate-card" style={{ animationDelay: '120ms' }}>{toPersianDigits(approvedCount)} تایید شده</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-sky-100 shadow-sm border border-sky-200/30 bg-sky-500/15 animate-card" style={{ animationDelay: '180ms' }}>{toPersianDigits(totalFiles)} فایل</div>
-                        </div>
                         <button
                             onClick={() => navigate('/upload', { state: { autoOpenPicker: true } })}
                             className="relative overflow-hidden flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#ef9f64] via-[#f0843c] to-[#f55d4e] px-4 py-3 text-sm font-bold text-white shadow-xl transition hover:shadow-2xl hover:-translate-y-0.5 hover-lift"
@@ -153,32 +137,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs text-slate-200">
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-rose-200 font-semibold">در حال پردازش</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(processingCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-sky-200 font-semibold">در صف</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(processingCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-emerald-200 font-semibold">فایل موفق</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(approvedCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-fuchsia-200 font-semibold">فایل رد شده</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(rejectedCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-amber-100 font-semibold">کل فایل</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(totalFiles)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-slate-200 font-semibold">فایل امروز</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(totalFiles)}</span>
-                        </div>
-                    </div>
                 </div>
             </header>
             {isLogoutModalOpen && (

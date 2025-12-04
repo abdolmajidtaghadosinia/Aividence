@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { DashboardIcon, UploadIcon, DictionaryIcon, AssistantIcon } from './Icons';
+import { DashboardIcon, UploadIcon, DictionaryIcon, AssistantIcon, FolderIcon } from './Icons';
 import Logo from './Logo';
 import { useFiles } from '../contexts/FileContext';
 import { FileStatus } from '../types';
@@ -42,6 +42,14 @@ const Sidebar: React.FC = () => {
         },
         {
             to: undefined,
+            label: 'مخزن دانش',
+            description: 'تجمیع فایل‌های پردازش شده',
+            icon: <FolderIcon className="w-6 h-6" />,
+            gradient: 'from-[#94a3b8] via-[#64748b] to-[#475569]',
+            disabled: true,
+        },
+        {
+            to: undefined,
             label: 'دستیار هوشمند',
             description: 'به زودی فعال می‌شود',
             icon: <AssistantIcon className="w-6 h-6" />,
@@ -80,7 +88,7 @@ const Sidebar: React.FC = () => {
     );
 
     return (
-        <aside className="hidden md:flex fixed top-0 right-0 z-40 w-80 max-w-[23rem] h-screen flex-col rounded-l-[30px] p-6 overflow-y-auto overflow-x-hidden animate-fade-in-down bg-gradient-to-b from-[#0b142b]/95 via-[#0b1c37]/94 to-[#0c1a33]/92 border border-[#213056]/70 shadow-[0_30px_90px_rgba(5,10,34,0.55)] text-slate-100 backdrop-blur-xl">
+        <aside className="hidden md:flex fixed top-0 right-0 z-40 w-80 max-w-[23rem] h-screen flex-col rounded-l-[30px] p-6 overflow-hidden animate-fade-in-down bg-gradient-to-b from-[#0b142b]/95 via-[#0b1c37]/94 to-[#0c1a33]/92 border border-[#213056]/70 shadow-[0_30px_90px_rgba(5,10,34,0.55)] text-slate-100 backdrop-blur-xl">
             <div className="p-5 rounded-[26px] bg-gradient-to-br from-[#0f1d3a]/85 via-[#0c2446]/85 to-[#0f1a35]/85 border border-[#2d3f6d] shadow-inner flex items-center gap-4 hover-lift">
                 <div className="flex-1">
                     <Logo size="sm" showText className="justify-start text-white" />
