@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { DashboardIcon, UploadIcon, DictionaryIcon, AssistantIcon } from './Icons';
+import { DashboardIcon, UploadIcon, DictionaryIcon, AssistantIcon, FolderIcon } from './Icons';
 import Logo from './Logo';
 import { useFiles } from '../contexts/FileContext';
 import { FileStatus } from '../types';
@@ -39,6 +39,14 @@ const Sidebar: React.FC = () => {
             description: 'مدیریت واژه‌های کلیدی',
             icon: <DictionaryIcon className="w-6 h-6" />,
             gradient: 'from-[#2dd4bf] via-[#14b8a6] to-[#0f766e]',
+        },
+        {
+            to: undefined,
+            label: 'مخزن دانش',
+            description: 'تجمیع فایل‌های پردازش شده',
+            icon: <FolderIcon className="w-6 h-6" />,
+            gradient: 'from-[#94a3b8] via-[#64748b] to-[#475569]',
+            disabled: true,
         },
         {
             to: undefined,
