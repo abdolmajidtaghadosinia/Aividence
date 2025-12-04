@@ -30,11 +30,20 @@ try:
     from reportlab.lib.pagesizes import A4
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.enums import TA_RIGHT
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 except Exception:  # pragma: no cover
     canvas = None
     A4 = None
     pdfmetrics = None
     TTFont = None
+    TA_RIGHT = None
+    ParagraphStyle = None
+    getSampleStyleSheet = None
+    SimpleDocTemplate = None
+    Paragraph = None
+    Spacer = None
 
 try:
     import arabic_reshaper
@@ -65,11 +74,12 @@ class ExportCustomContentZipView(APIView):
         """Return the original audio filename (without extension) when available."""
 
         source_file_name = ""
-        if getattr(audio_text.file, "file", None):
-            source_file_name = os.path.basename(audio_text.file.file.name or "")
+        field_file = getattr(audio_text.file, "file", None)
+        if field_file and getattr(field_file, "name", ""):
+            source_file_name = os.path.basename(field_file.name)
 
         if not source_file_name:
-            source_file_name = audio_text.file.name or ""
+            source_file_name = os.path.basename(audio_text.file.name or "")
 
         base_name, _ = os.path.splitext(source_file_name)
         if base_name:
@@ -169,19 +179,31 @@ class ExportCustomContentZipView(APIView):
                         bidi = OxmlElement('w:bidi')
                         bidi.set(qn('w:val'), '1')
                         pPr.append(bidi)
+                    rtl = pPr.find(qn('w:rtl'))
+                    if rtl is None:
+                        rtl = OxmlElement('w:rtl')
+                        rtl.set(qn('w:val'), '1')
+                        pPr.append(rtl)
                 except Exception:
                     pass
 
         def _apply_document_rtl_defaults():
             """Set document-level RTL hints and default RTL alignment for new paragraphs."""
 
+            if WD_PARAGRAPH_ALIGNMENT is not None:
+                try:
+                    normal_style = document.styles['Normal']
+                    normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+                except Exception:
+                    pass
+
             if qn is not None:
                 try:
                     normal_style = document.styles['Normal']
                     normal_style.font.name = 'Vazirmatn'
-                    normal_style._element.rPr.rFonts.set(qn('w:eastAsia'), 'Vazirmatn')
-                    if WD_PARAGRAPH_ALIGNMENT is not None:
-                        normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+                    r_fonts = normal_style._element.rPr.rFonts
+                    for attr in ('w:ascii', 'w:hAnsi', 'w:cs', 'w:eastAsia'):
+                        r_fonts.set(qn(attr), 'Vazirmatn')
                 except Exception:
                     pass
 
@@ -207,8 +229,10 @@ class ExportCustomContentZipView(APIView):
 
         # In-memory PDF
         pdf_buf = io.BytesIO()
-        if canvas is None:
+        if canvas is None or SimpleDocTemplate is None or Paragraph is None:
             return Response({'detail': 'reportlab نصب نیست.'}, status=500)
+        if ParagraphStyle is None or getSampleStyleSheet is None or TA_RIGHT is None:
+            return Response({'detail': 'reportlab style components در دسترس نیستند.'}, status=500)
         if arabic_reshaper is None or get_display is None:
             return Response({'detail': 'کتابخانه‌های arabic-reshaper و python-bidi برای ساخت PDF فارسی الزامی هستند.'}, status=500)
 
@@ -253,61 +277,36 @@ class ExportCustomContentZipView(APIView):
 
             return text
 
-        def _wrap_line(text, max_width, active_font):
-            """Wrap a single line to the maximum width based on the active font metrics."""
+        # Build a proper RTL PDF using Platypus so glyph shaping and wrapping stay intact.
+        doc = SimpleDocTemplate(
+            pdf_buf,
+            pagesize=A4 or (595, 842),
+            rightMargin=48,
+            leftMargin=48,
+            topMargin=48,
+            bottomMargin=48,
+        )
 
-            if not text:
-                return [""]
+        base_styles = getSampleStyleSheet()
+        persian_style = ParagraphStyle(
+            name="Persian",
+            parent=base_styles["Normal"],
+            fontName=font_name or "Helvetica",
+            fontSize=12,
+            leading=16,
+            alignment=TA_RIGHT,
+            wordWrap="RTL",
+            allowOrphans=0,
+            allowWidows=0,
+        )
 
-            prepared_text = _prepare_rtl_text(text)
-
-            # Fallback to a naive character-based wrap when metrics are unavailable.
-            if pdfmetrics is None or active_font is None:
-                import textwrap
-
-                return textwrap.wrap(prepared_text, width=80) or [""]
-
-            words = prepared_text.split()
-            wrapped, current = [], ""
-            for word in words:
-                candidate = word if not current else f"{current} {word}"
-                if (
-                    pdfmetrics.stringWidth(candidate, active_font, 12)
-                    <= max_width
-                ):
-                    current = candidate
-                else:
-                    if current:
-                        wrapped.append(current)
-                    current = word
-            if current:
-                wrapped.append(current)
-            return wrapped or [""]
-
-        c = canvas.Canvas(pdf_buf, pagesize=A4 or (595, 842))
-        width, height = (A4 or (595, 842))
-        margin = 48
-        line_height = 18
-        start_y = height - margin
-        text_x = width - margin  # Right-aligned for Persian content.
-        active_font = font_name or c._fontname
-        c.setFont(active_font, 12)
-
-        y = start_y
+        story = []
         for paragraph in content.splitlines() or [""]:
-            max_width = width - (margin * 2)
-            wrapped_lines = _wrap_line(paragraph, max_width, active_font)
-            for line in wrapped_lines:
-                if y < margin:
-                    c.showPage()
-                    c.setFont(active_font, 12)
-                    y = start_y
-                c.drawRightString(text_x, y, _prepare_rtl_text(line))
-                y -= line_height
-            # Extra spacing between paragraphs.
-            y -= 4
+            prepared = _prepare_rtl_text(paragraph)
+            story.append(Paragraph(prepared, persian_style))
+            story.append(Spacer(1, 8))
 
-        c.save()
+        doc.build(story)
         pdf_buf.seek(0)
 
         # ZIP both
