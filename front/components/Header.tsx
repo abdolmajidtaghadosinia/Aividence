@@ -2,12 +2,8 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useClickOutside } from '../hooks/useClickOutside';
-import { useFiles } from '../contexts/FileContext';
-import { FileStatus } from '../types';
-import { toPersianDigits } from '../constants';
 import { UserIcon, LogoutIcon, ChevronDownIcon, BellIcon, SearchIcon, UploadIcon, LockIcon } from './Icons';
 import LogoutModal from './LogoutModal';
-import Logo from './Logo';
 
 /**
  * Dropdown panel presenting account actions for the authenticated user.
@@ -41,7 +37,6 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const { files } = useFiles();
 
     const [isProfileOpen, setProfileOpen] = useState(false);
     const [isLogoutModalOpen, setLogoutModalOpen] = useState(false);
@@ -52,11 +47,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
     const handleLogout = () => {
         logout(() => navigate('/login'));
     };
-
-    const totalFiles = files.length;
-    const processingCount = files.filter(f => f.status === FileStatus.Processing).length;
-    const approvedCount = files.filter(f => f.status === FileStatus.Approved).length;
-    const rejectedCount = files.filter(f => f.status === FileStatus.Rejected).length;
 
     return (
         <>
@@ -137,11 +127,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                                 value={searchTerm}
                                 onChange={(e) => onSearchChange(e.target.value)}
                             />
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-amber-100 shadow-sm border border-amber-200/30 bg-amber-500/15 animate-card" style={{ animationDelay: '60ms' }}>{toPersianDigits(processingCount)} در حال پردازش</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-emerald-100 shadow-sm border border-emerald-200/30 bg-emerald-500/15 animate-card" style={{ animationDelay: '120ms' }}>{toPersianDigits(approvedCount)} تایید شده</div>
-                            <div className="rounded-2xl px-3 py-2 text-[11px] font-semibold text-sky-100 shadow-sm border border-sky-200/30 bg-sky-500/15 animate-card" style={{ animationDelay: '180ms' }}>{toPersianDigits(totalFiles)} فایل</div>
                         </div>
                         <button
                             onClick={() => navigate('/upload', { state: { autoOpenPicker: true } })}
