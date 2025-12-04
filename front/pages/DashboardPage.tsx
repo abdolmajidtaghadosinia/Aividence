@@ -115,6 +115,8 @@ const DashboardPage: React.FC = () => {
         rejected: files.filter(f => f.status === FileStatus.Rejected).length,
     }), [files]);
 
+    const hasProcessing = stats.processing > 0;
+
     const subsetStats = useMemo(() => {
         const map: Record<string, { total: number; approved: number; processing: number }> = {};
         files.forEach((file) => {
@@ -344,15 +346,25 @@ const DashboardPage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
-                <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
-                <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
-                <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
-                <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
-                <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
+        <div className="relative">
+            <div
+                className={`pointer-events-none absolute inset-[-32px] lg:inset-[-48px] overflow-hidden rounded-[40px] transition-opacity duration-700 ease-out ${hasProcessing ? 'opacity-80' : 'opacity-0'}`}
+                aria-hidden
+            >
+                <div className="processing-aurora absolute inset-0" />
+                <div className="processing-aurora-alt absolute inset-0" />
+                <div className="processing-grain absolute inset-0" />
             </div>
+
+            <div className="relative space-y-6">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <StatCard title="کل فایل های صوتی " count={stats.total} colorTheme="orange" status="all" onFilterClick={handleStatusFilterChange} isActive={statusFilter === 'all'} />
+                    <StatCard title="در انتظار پردازش هوشمند" count={stats.pending} colorTheme="gray" status={FileStatus.Pending} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Pending} />
+                    <StatCard title="در حال پردازش هوشمند" count={stats.processing} colorTheme="blue" status={FileStatus.Processing} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processing} />
+                    <StatCard title="محتوای تولید شده" count={stats.processed} colorTheme="purple" status={FileStatus.Processed} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Processed} />
+                    <StatCard title="تایید شده" count={stats.approved} colorTheme="green" status={FileStatus.Approved} onFilterClick={handleStatusFilterChange} isActive={statusFilter === FileStatus.Approved} />
+                </div>
 
             {stats.processing > 0 && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 flex items-center gap-3 shadow-sm">

@@ -76,7 +76,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-3">
                                     <h1 className="text-3xl font-black text-white">داشبورد مدیریت عملیات</h1>
-                                    <span className="rounded-2xl bg-gradient-to-r from-[#1f2937] via-[#0f172a] to-[#0b1224] px-3 py-1 text-[11px] font-bold text-amber-200 shadow-inner border border-white/5">نسخه پیشرفته</span>
                                 </div>
                             </div>
                         </div>

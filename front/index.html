@@ -158,6 +158,25 @@
         60% { opacity: 0.92; transform: scale(1.02); }
       }
 
+      @keyframes auroraShift {
+        0% { transform: translate3d(-10%, -6%, 0) rotate(-2deg) scale(1); opacity: 0.22; }
+        40% { transform: translate3d(12%, -2%, 0) rotate(1deg) scale(1.08); opacity: 0.3; }
+        70% { transform: translate3d(-6%, 8%, 0) rotate(-1deg) scale(1.04); opacity: 0.26; }
+        100% { transform: translate3d(10%, 12%, 0) rotate(2deg) scale(1.12); opacity: 0.24; }
+      }
+
+      @keyframes sparkDrift {
+        0% { transform: translate3d(12%, -12%, 0) scale(0.9); opacity: 0.18; }
+        50% { transform: translate3d(-14%, 6%, 0) scale(1.05); opacity: 0.28; }
+        100% { transform: translate3d(8%, 18%, 0) scale(0.96); opacity: 0.16; }
+      }
+
+      @keyframes grainFloat {
+        0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.1; }
+        50% { transform: translate3d(-6%, 4%, 0) scale(1.03); opacity: 0.16; }
+        100% { transform: translate3d(4%, -6%, 0) scale(1.01); opacity: 0.12; }
+      }
+
       .animate-page {
         animation: fadeInUp 0.6s ease both;
       }
@@ -203,6 +222,36 @@
 
       .new-row-highlight {
         animation: highlightRow 1.2s ease-in-out 2;
+      }
+
+      .processing-aurora {
+        background: radial-gradient(50% 50% at 30% 30%, rgba(59,130,246,0.25) 0%, rgba(14,165,233,0.12) 35%, transparent 70%),
+          radial-gradient(42% 42% at 70% 50%, rgba(236,72,153,0.22) 0%, rgba(109,40,217,0.16) 32%, transparent 70%),
+          radial-gradient(36% 36% at 50% 78%, rgba(56,189,248,0.2) 0%, rgba(59,130,246,0.12) 45%, transparent 70%);
+        filter: blur(70px) saturate(1.2);
+        mix-blend-mode: screen;
+        opacity: 0.25;
+        animation: auroraShift 18s ease-in-out infinite alternate;
+      }
+
+      .processing-aurora-alt {
+        background: radial-gradient(45% 45% at 20% 60%, rgba(34,211,238,0.2) 0%, rgba(45,212,191,0.18) 35%, transparent 70%),
+          radial-gradient(30% 30% at 78% 26%, rgba(251,191,36,0.18) 0%, rgba(249,115,22,0.14) 35%, transparent 70%);
+        filter: blur(80px) saturate(1.1);
+        mix-blend-mode: soft-light;
+        opacity: 0.22;
+        animation: sparkDrift 16s ease-in-out infinite alternate;
+      }
+
+      .processing-grain {
+        background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+          radial-gradient(rgba(244,114,182,0.07) 1px, transparent 1px),
+          radial-gradient(rgba(125,211,252,0.08) 1px, transparent 1px);
+        background-size: 120px 120px, 140px 140px, 110px 110px;
+        background-position: 0 0, 30px 40px, -20px 20px;
+        mix-blend-mode: overlay;
+        opacity: 0.16;
+        animation: grainFloat 22s ease-in-out infinite alternate;
       }
     </style>
   <script type="importmap">
