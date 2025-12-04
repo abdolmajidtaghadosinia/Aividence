@@ -383,15 +383,15 @@ const DashboardPage: React.FC = () => {
                             </button>
                         </div>
 
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-right text-gray-600 table-fixed">
+                        <div className="overflow-x-auto relative">
+                            <table className="w-full text-sm text-right text-gray-600 table-auto min-w-[1100px]">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 w-[26%] min-w-[160px]">نام فایل صوتی</th>
-                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[140px]">تاریخ</th>
-                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[14%] min-w-[110px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 w-[22%] min-w-[150px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[130px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[12%] min-w-[100px]">نوع</th>
                                         <th scope="col" className="px-6 py-3 w-[18%] min-w-[150px]">وضعیت</th>
-                                        <th scope="col" className="px-6 py-3 w-[24%] min-w-[190px]">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 w-[30%] min-w-[240px]">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -482,8 +482,8 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[220px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1)] z-10">
-                                                            <div className="flex flex-col gap-3 min-w-[200px]">
+                                                        <td className="px-4 py-4 align-top w-[260px] max-w-[320px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
+                                                            <div className="flex flex-col gap-3 min-w-[240px]">
                                                                 {summary && (
                                                                     <p className="text-xs text-slate-600 truncate" title={summary}>
                                                                         {summary}
