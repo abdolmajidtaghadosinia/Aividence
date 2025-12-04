@@ -153,32 +153,6 @@ const Header: React.FC<HeaderProps> = ({ searchTerm, onSearchChange }) => {
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs text-slate-200">
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-rose-200 font-semibold">در حال پردازش</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(processingCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-sky-200 font-semibold">در صف</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(processingCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-emerald-200 font-semibold">فایل موفق</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(approvedCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-fuchsia-200 font-semibold">فایل رد شده</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(rejectedCount)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-amber-100 font-semibold">کل فایل</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(totalFiles)}</span>
-                        </div>
-                        <div className="frosted-chip px-3 py-3 rounded-2xl flex flex-col gap-1 shadow-sm border border-white/5 bg-white/5">
-                            <span className="text-[11px] text-slate-200 font-semibold">فایل امروز</span>
-                            <span className="text-slate-50 font-bold text-base">{toPersianDigits(totalFiles)}</span>
-                        </div>
-                    </div>
                 </div>
             </header>
             {isLogoutModalOpen && (
