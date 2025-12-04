@@ -90,15 +90,22 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  const notifyStatusChange = useCallback((fileName: string, statusLabel: string) => {
-    if (typeof window === 'undefined' || !('Notification' in window)) return;
+  const notifyStatusChange = useCallback(
+    async (fileName: string, statusLabel: string) => {
+      if (typeof window === 'undefined' || !('Notification' in window)) return;
 
-    if (Notification.permission === 'granted') {
-      new Notification('وضعیت پردازش به‌روزرسانی شد', {
-        body: `${fileName}: ${statusLabel}`,
-      });
-    }
-  }, []);
+      if (Notification.permission === 'default') {
+        await requestNotificationPermission();
+      }
+
+      if (Notification.permission === 'granted') {
+        new Notification('وضعیت پردازش به‌روزرسانی شد', {
+          body: `${fileName}: ${statusLabel}`,
+        });
+      }
+    },
+    [requestNotificationPermission]
+  );
 
   const getFileById = useCallback((id: string) => {
     return files.find(f => f.id === id);
@@ -175,21 +182,22 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         })
       );
 
-      if (notifyChanges) {
-        processingProgress.forEach((file) => {
-          const previousFile = previousFiles[file.id];
-          if (!previousFile) return;
+        if (notifyChanges) {
+          processingProgress.forEach((file) => {
+            const previousFile = previousFiles[file.id];
+            if (!previousFile) return;
 
-          const statusChanged = previousFile.status !== file.status;
-          const statusDisplayChanged = previousFile.statusDisplay !== file.statusDisplay;
-          const progressLabelChanged = previousFile.progressLabel !== file.progressLabel && file.status === FileStatus.Processing;
+            const statusChanged = previousFile.status !== file.status;
+            const statusDisplayChanged = previousFile.statusDisplay !== file.statusDisplay;
+            const progressLabelChanged = previousFile.progressLabel !== file.progressLabel && file.status === FileStatus.Processing;
+            const completedProgress = (previousFile.progress ?? 0) < 100 && (file.progress ?? 0) >= 100;
 
-          if (statusChanged || statusDisplayChanged || progressLabelChanged) {
-            const statusLabel = file.statusDisplay || file.progressLabel || file.status || 'به‌روزرسانی شد';
-            notifyStatusChange(file.name, statusLabel.toString());
-          }
-        });
-      }
+            if (statusChanged || statusDisplayChanged || progressLabelChanged || completedProgress) {
+              const statusLabel = file.statusDisplay || file.progressLabel || file.status || 'به‌روزرسانی شد';
+              notifyStatusChange(file.name, statusLabel.toString());
+            }
+          });
+        }
 
       previousFilesRef.current = processingProgress.reduce<Record<string, FileData>>((acc, file) => {
         acc[file.id] = file;
@@ -227,12 +235,18 @@ export const FileProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
 
         const newStatus = statusMap[response.current_status] || FileStatus.Pending;
+        const previousFile = getFileById(fileId);
         updateFile(fileId, { status: newStatus });
+
+        if (previousFile && previousFile.status !== newStatus) {
+          const label = response.status_display || newStatus;
+          notifyStatusChange(previousFile.name, label.toString());
+        }
       }
     } catch (err: any) {
       console.error('Error checking file status:', err);
     }
-  }, [updateFile]);
+  }, [getFileById, notifyStatusChange, updateFile]);
 
   // Load files on mount
   useEffect(() => {
