@@ -290,24 +290,12 @@ const DashboardPage: React.FC = () => {
     useEffect(() => {
         if (!recentlyAddedFileId) return;
 
-        const listTop = listSectionRef.current?.getBoundingClientRect().top;
-        if (typeof listTop === 'number') {
-            const scrollTarget = window.scrollY + listTop - 40;
-            window.scrollTo({ top: Math.max(scrollTarget, 0), behavior: 'smooth' });
-        } else {
-            listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setHighlightedFileId(recentlyAddedFileId);
     }, [recentlyAddedFileId]);
 
     useEffect(() => {
         if (!highlightedFileId) return;
-
-        const scrollTimeout = window.setTimeout(() => {
-            const targetRow = rowRefs.current[highlightedFileId];
-            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-        }, 100);
 
         const clearTimeoutId = window.setTimeout(() => {
             setHighlightedFileId(null);
@@ -315,10 +303,9 @@ const DashboardPage: React.FC = () => {
         }, 4000);
 
         return () => {
-            clearTimeout(scrollTimeout);
             clearTimeout(clearTimeoutId);
         };
-    }, [highlightedFileId, filteredFiles, clearRecentlyAddedFile]);
+    }, [highlightedFileId, clearRecentlyAddedFile]);
 
     if (loading) {
         return (
