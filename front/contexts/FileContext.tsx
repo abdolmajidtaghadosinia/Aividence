@@ -66,7 +66,7 @@ const convertApiFileToFileData = (apiFile: AudioFileItem): FileData => {
     progressLabel: statusDisplay,
     task_id: apiFile.task_id,
     upload_uuid: apiFile.upload_uuid,
-    uploader: (apiFile as any).uploader || undefined,
+    uploader: apiFile.uploader || undefined,
   } as FileData;
 };
 

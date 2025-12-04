@@ -200,12 +200,12 @@ class ExportCustomContentZipView(APIView):
         document = Document()
 
         def _apply_paragraph_rtl(paragraph):
-            """Ensure paragraphs are right-aligned and marked as RTL when supported."""
+            """Ensure paragraphs are left-aligned while keeping RTL glyph shaping."""
 
             if WD_PARAGRAPH_ALIGNMENT is not None:
-                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
             try:
-                paragraph.paragraph_format.rtl = True
+                paragraph.paragraph_format.rtl = False
             except Exception:
                 pass
 
@@ -236,13 +236,13 @@ class ExportCustomContentZipView(APIView):
                 pass
 
         def _apply_document_rtl_defaults():
-            """Set document-level RTL hints and default RTL alignment for new paragraphs."""
+            """Set document-level defaults to left alignment while keeping Vazirmatn font."""
 
             if WD_PARAGRAPH_ALIGNMENT is not None:
                 try:
                     normal_style = document.styles['Normal']
-                    normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
-                    normal_style.paragraph_format.rtl = True
+                    normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+                    normal_style.paragraph_format.rtl = False
                 except Exception:
                     pass
 
@@ -316,6 +316,8 @@ class ExportCustomContentZipView(APIView):
             return None
 
         font_name = _register_persian_font()
+        if not font_name:
+            return Response({'detail': 'فونت وزیرمتن برای ساخت PDF در دسترس نیست.'}, status=500)
 
         def _prepare_rtl_text(text: str) -> str:
             """Return a display-ready RTL string when bidi helpers are available."""
@@ -346,7 +348,7 @@ class ExportCustomContentZipView(APIView):
         persian_style = ParagraphStyle(
             name="Persian",
             parent=base_styles["Normal"],
-            fontName=font_name or "Helvetica",
+            fontName=font_name,
             fontSize=12,
             leading=16,
             alignment=TA_RIGHT,

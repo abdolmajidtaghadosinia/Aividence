@@ -12,7 +12,7 @@ const MainLayout: React.FC = () => {
     const [headerSearchTerm, setHeaderSearchTerm] = useState('');
 
     return (
-        <div className="relative min-h-screen overflow-x-hidden text-slate-100 animate-page">
+        <div className="relative min-h-screen overflow-x-hidden text-slate-100 animate-page-safe">
             <div className="pointer-events-none absolute -top-16 -left-10 h-72 w-72 rounded-full bg-gradient-to-br from-[#58bdf3]/60 via-[#3a64e0]/55 to-[#10244c]/55 blur-[120px] opacity-90" />
             <div className="pointer-events-none absolute -bottom-40 -right-10 h-96 w-96 rounded-full bg-gradient-to-tr from-[#101a33]/75 via-[#0c2344]/70 to-[#0e1730]/70 blur-[140px] opacity-80" />
             <div className="pointer-events-none absolute top-24 left-1/3 h-[22rem] w-[22rem] rounded-full bg-gradient-to-br from-[#8b5cf6]/45 via-[#14b8a6]/35 to-[#0ea5e9]/35 blur-[150px] opacity-80" />
