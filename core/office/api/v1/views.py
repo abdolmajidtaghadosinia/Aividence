@@ -185,6 +185,10 @@ class ExportCustomContentZipView(APIView):
 
             if WD_PARAGRAPH_ALIGNMENT is not None:
                 paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+            try:
+                paragraph.paragraph_format.rtl = True
+            except Exception:
+                pass
 
             if qn is not None and OxmlElement is not None:
                 try:
@@ -202,6 +206,16 @@ class ExportCustomContentZipView(APIView):
                 except Exception:
                     pass
 
+            try:
+                for run in paragraph.runs:
+                    run.font.name = 'Vazirmatn'
+                    if qn is not None:
+                        r_fonts = run._element.rPr.rFonts
+                        for attr in ('w:ascii', 'w:hAnsi', 'w:cs', 'w:eastAsia'):
+                            r_fonts.set(qn(attr), 'Vazirmatn')
+            except Exception:
+                pass
+
         def _apply_document_rtl_defaults():
             """Set document-level RTL hints and default RTL alignment for new paragraphs."""
 
@@ -209,6 +223,7 @@ class ExportCustomContentZipView(APIView):
                 try:
                     normal_style = document.styles['Normal']
                     normal_style.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT
+                    normal_style.paragraph_format.rtl = True
                 except Exception:
                     pass
 
