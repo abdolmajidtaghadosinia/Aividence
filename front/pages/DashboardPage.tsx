@@ -384,14 +384,14 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         <div className="overflow-x-auto relative">
-                            <table className="w-full text-sm text-right text-gray-600 table-auto min-w-[1100px]">
+                            <table className="w-full text-sm text-right text-gray-600 table-auto min-w-[980px]">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3 w-[22%] min-w-[150px]">نام فایل صوتی</th>
-                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[130px]">تاریخ</th>
-                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[12%] min-w-[100px]">نوع</th>
-                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[150px]">وضعیت</th>
-                                        <th scope="col" className="px-6 py-3 w-[30%] min-w-[240px]">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 w-[22%] min-w-[140px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 w-[16%] min-w-[120px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[12%] min-w-[90px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 w-[18%] min-w-[140px]">وضعیت</th>
+                                        <th scope="col" className="px-6 py-3 w-[32%] min-w-[220px]">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -482,14 +482,14 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-4 py-4 align-top w-[260px] max-w-[320px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
-                                                            <div className="flex flex-col gap-3 min-w-[240px]">
+                                                        <td className="px-4 py-4 align-top w-[230px] max-w-[260px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
+                                                            <div className="flex flex-col gap-3 min-w-[220px]">
                                                                 {summary && (
-                                                                    <p className="text-xs text-slate-600 truncate" title={summary}>
+                                                                    <p className="text-xs text-slate-600 line-clamp-2" title={summary}>
                                                                         {summary}
                                                                     </p>
                                                                 )}
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                                                <div className="grid grid-cols-1 gap-2">
                                                                     <button
                                                                         onClick={() => handleViewClick(file)}
                                                                         className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
