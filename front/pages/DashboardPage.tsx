@@ -219,7 +219,14 @@ const DashboardPage: React.FC = () => {
     useEffect(() => {
         if (!recentlyAddedFileId) return;
 
-        listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const listTop = listSectionRef.current?.getBoundingClientRect().top;
+        if (typeof listTop === 'number') {
+            const scrollTarget = window.scrollY + listTop - 40;
+            window.scrollTo({ top: Math.max(scrollTarget, 0), behavior: 'smooth' });
+        } else {
+            listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
         setHighlightedFileId(recentlyAddedFileId);
     }, [recentlyAddedFileId]);
 
@@ -228,7 +235,7 @@ const DashboardPage: React.FC = () => {
 
         const scrollTimeout = window.setTimeout(() => {
             const targetRow = rowRefs.current[highlightedFileId];
-            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
         }, 100);
 
         const clearTimeoutId = window.setTimeout(() => {
@@ -344,7 +351,7 @@ const DashboardPage: React.FC = () => {
                                             <tr
                                                 key={file.id}
                                                 ref={(el) => { rowRefs.current[file.id] = el; }}
-                                                className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md' : ''}`}
+                                                className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md new-row-highlight' : ''}`}
                                                 style={{ animationDelay: `${index * 45}ms` }}
                                             >
                                                 <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">

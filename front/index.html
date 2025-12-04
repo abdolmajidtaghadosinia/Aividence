@@ -145,6 +145,13 @@
         100% { background-position: -200% 0; }
       }
 
+      @keyframes highlightRow {
+        0% { box-shadow: 0 8px 30px rgba(99,102,241,0.08); }
+        40% { box-shadow: 0 15px 45px rgba(99,102,241,0.18); }
+        70% { box-shadow: 0 10px 36px rgba(59,130,246,0.12); }
+        100% { box-shadow: 0 8px 30px rgba(99,102,241,0.08); }
+      }
+
       @keyframes pulseSlow {
         0%, 100% { opacity: 0.85; transform: scale(1); }
         40% { opacity: 1; transform: scale(1.04); }
@@ -192,6 +199,10 @@
 
       .table-row-animate {
         animation: fadeInUp 0.45s ease both;
+      }
+
+      .new-row-highlight {
+        animation: highlightRow 1.2s ease-in-out 2;
       }
     </style>
   <script type="importmap">
