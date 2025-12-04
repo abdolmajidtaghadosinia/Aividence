@@ -692,6 +692,8 @@ const DashboardPage: React.FC = () => {
                 </div>
             </div>
 
+            </div>
+
             {selectedFile && <FileDetailsModal file={selectedFile} onClose={() => setSelectedFile(null)} />}
 
             {confirmAction && (
