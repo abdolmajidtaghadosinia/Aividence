@@ -482,8 +482,8 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-3 py-4 align-top w-[210px] max-w-[220px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
-                                                            <div className="flex flex-col gap-3 min-w-[210px]">
+                                                        <td className="px-3 py-4 align-top w-[185px] max-w-[190px] sticky right-0 bg-white border-l border-slate-100 shadow-[inset_1px_0_0_rgba(226,232,240,1),0_6px_18px_rgba(15,23,42,0.06)] z-20">
+                                                            <div className="flex flex-col gap-3 min-w-[185px]">
                                                                 {summary && (
                                                                     <p className="text-xs text-slate-600 line-clamp-1" title={summary}>
                                                                         {summary}
@@ -492,44 +492,44 @@ const DashboardPage: React.FC = () => {
                                                                 <div className="grid grid-cols-1 gap-2">
                                                                     <button
                                                                         onClick={() => handleViewClick(file)}
-                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        className="flex items-center justify-center gap-2 w-full px-2.5 py-2 text-xs font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                                                         title="مشاهده جزئیات"
                                                                         disabled={file.status === FileStatus.Processing}
                                                                     >
                                                                         <span>مشاهده</span>
-                                                                        <EyeIcon className="w-5 h-5" />
+                                                                        <EyeIcon className="w-4 h-4" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => exportCustomContentZip(file.id)}
                                                                         disabled={file.status !== FileStatus.Approved}
-                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        className="flex items-center justify-center gap-2 w-full px-2.5 py-2 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                                                         title="دانلود"
                                                                     >
                                                                         <span>دانلود</span>
-                                                                        <DownloadIcon className="w-5 h-5" />
+                                                                        <DownloadIcon className="w-4 h-4" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => openCancelModal(file)}
                                                                         disabled={!(file.status === FileStatus.Processing || file.status === FileStatus.Pending)}
-                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        className="flex items-center justify-center gap-2 w-full px-2.5 py-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                                                         title="توقف و حذف از صف"
                                                                     >
                                                                         <span>توقف و حذف از صف</span>
-                                                                        <StopIcon className="w-5 h-5" />
+                                                                        <StopIcon className="w-4 h-4" />
                                                                     </button>
                                                                     <button
                                                                         onClick={() => openDeleteModal(file)}
                                                                         disabled={file.status === FileStatus.Processing || file.status === FileStatus.Pending}
-                                                                        className="flex items-center justify-between w-full px-3 py-2 text-sm font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                                                        className="flex items-center justify-center gap-2 w-full px-2.5 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
                                                                         title="حذف آیتم"
                                                                     >
                                                                         <span>حذف</span>
-                                                                        <TrashIcon className="w-5 h-5" />
+                                                                        <TrashIcon className="w-4 h-4" />
                                                                     </button>
                                                                     {file.status === FileStatus.Pending && (
                                                                         <button
                                                                             onClick={() => togglePreview(file)}
-                                                                            className="inline-flex items-center justify-between w-full px-3 py-2 text-xs font-semibold text-indigo-700 bg-white border border-indigo-100 rounded-lg hover:bg-indigo-50 transition"
+                                                                            className="inline-flex items-center justify-center gap-2 w-full px-2.5 py-2 text-[11px] font-semibold text-indigo-700 bg-white border border-indigo-100 rounded-lg hover:bg-indigo-50 transition"
                                                                             type="button"
                                                                         >
                                                                             <span>{previewState?.expanded ? 'بستن خلاصه' : 'مشاهده خلاصه'}</span>
