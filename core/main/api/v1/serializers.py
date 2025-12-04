@@ -9,12 +9,13 @@ class AudioListItemSerializer(serializers.ModelSerializer):
     uploaded_at = serializers.DateTimeField(source='created_at', read_only=True)
     file_type_display = serializers.SerializerMethodField()
     status_display = serializers.SerializerMethodField()
+    uploader = serializers.SerializerMethodField()
 
     class Meta:
         model = Audio
         fields = [
             'id', 'file_name', 'uploaded_at', 'file_type', 'file_type_display',
-            'status', 'status_display', 'subset_title', 'upload_uuid', 'task_id'
+            'status', 'status_display', 'subset_title', 'upload_uuid', 'task_id', 'uploader'
         ]
         read_only_fields = fields
 
@@ -50,3 +51,16 @@ class AudioListItemSerializer(serializers.ModelSerializer):
             str: Display label of the current processing status.
         """
         return obj.get_status_display()
+
+    def get_uploader(self, obj):
+        """Return the full name of the uploader profile if available."""
+
+        profile = getattr(obj, 'user_uplouder', None)
+        if not profile:
+            return ''
+
+        name = getattr(profile, 'name', '') or ''
+        family = getattr(profile, 'family', '') or ''
+
+        full_name = f"{name} {family}".strip()
+        return full_name or ''

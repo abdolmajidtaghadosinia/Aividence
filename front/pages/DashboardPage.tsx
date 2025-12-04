@@ -34,6 +34,10 @@ const DashboardPage: React.FC = () => {
     };
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
+    useEffect(() => {
         const state = locationState as { scrollToTop?: boolean } | null;
         if (!state?.scrollToTop) return;
 
@@ -286,24 +290,12 @@ const DashboardPage: React.FC = () => {
     useEffect(() => {
         if (!recentlyAddedFileId) return;
 
-        const listTop = listSectionRef.current?.getBoundingClientRect().top;
-        if (typeof listTop === 'number') {
-            const scrollTarget = window.scrollY + listTop - 40;
-            window.scrollTo({ top: Math.max(scrollTarget, 0), behavior: 'smooth' });
-        } else {
-            listSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         setHighlightedFileId(recentlyAddedFileId);
     }, [recentlyAddedFileId]);
 
     useEffect(() => {
         if (!highlightedFileId) return;
-
-        const scrollTimeout = window.setTimeout(() => {
-            const targetRow = rowRefs.current[highlightedFileId];
-            targetRow?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
-        }, 100);
 
         const clearTimeoutId = window.setTimeout(() => {
             setHighlightedFileId(null);
@@ -311,10 +303,9 @@ const DashboardPage: React.FC = () => {
         }, 4000);
 
         return () => {
-            clearTimeout(scrollTimeout);
             clearTimeout(clearTimeoutId);
         };
-    }, [highlightedFileId, filteredFiles, clearRecentlyAddedFile]);
+    }, [highlightedFileId, clearRecentlyAddedFile]);
 
     if (loading) {
         return (
@@ -393,14 +384,14 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-right text-gray-600">
+                            <table className="w-full min-w-[1040px] text-sm text-right text-gray-600 table-fixed">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-6 py-3">نام فایل صوتی</th>
-                                        <th scope="col" className="px-6 py-3">تاریخ</th>
-                                        <th scope="col" className="px-6 py-3 hidden md:table-cell">نوع</th>
-                                        <th scope="col" className="px-6 py-3">وضعیت</th>
-                                        <th scope="col" className="px-6 py-3">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 w-[230px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 w-[170px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell w-[140px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 w-[230px]">وضعیت</th>
+                                        <th scope="col" className="px-6 py-3 w-[240px]">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -433,11 +424,11 @@ const DashboardPage: React.FC = () => {
                                                         className={`bg-white border-b hover:bg-gray-50 table-row-animate transition-shadow duration-300 ${isHighlighted ? 'ring-2 ring-indigo-200 ring-offset-2 ring-offset-white bg-indigo-50/50 shadow-md new-row-highlight' : ''}`}
                                                         style={{ animationDelay: `${index * 45}ms` }}
                                                     >
-                                                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
+                                                        <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[220px]">
                                                             <div className="truncate" title={file.name}>{file.name}</div>
-                                                            <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
+                                                            <div className="text-xs text-slate-500 mt-1">{`توسط ${file.uploader || 'ادمین'}`}</div>
                                                         </td>
-                                                        <td className="px-6 py-4 align-top">
+                                                        <td className="px-6 py-4 align-top w-[170px]">
                                                             <div className="space-y-1 text-[13px] text-slate-700">
                                                                 <div className="font-semibold">{date && toPersianDigits(date)}</div>
                                                                 {time && (
@@ -445,7 +436,7 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4 hidden md:table-cell align-top">
+                                                        <td className="px-6 py-4 hidden md:table-cell align-top w-[140px]">
                                                             <span
                                                                 className="inline-block font-medium text-slate-800 whitespace-nowrap leading-tight"
                                                                 style={{ fontSize: 'clamp(12px, 2.2vw, 14px)' }}
@@ -454,8 +445,8 @@ const DashboardPage: React.FC = () => {
                                                                 {file.type}
                                                             </span>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="space-y-2">
+                                                        <td className="px-6 py-4 align-top w-[230px]">
+                                                            <div className="space-y-2 max-w-[230px]">
                                                                 {renderStatusBadge(file.status)}
                                                                 {file.status === FileStatus.Processing && (
                                                                     <div className="space-y-1">
@@ -491,14 +482,14 @@ const DashboardPage: React.FC = () => {
                                                                 )}
                                                             </div>
                                                         </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col gap-2">
+                                                        <td className="px-6 py-4 align-top w-[240px]">
+                                                            <div className="flex flex-col gap-3 min-w-[220px] max-w-[240px]">
                                                                 {summary && (
-                                                                    <p className="text-xs text-slate-600 max-w-[280px] truncate" title={summary}>
+                                                                    <p className="text-xs text-slate-600 max-w-[320px] truncate" title={summary}>
                                                                         {summary}
                                                                     </p>
                                                                 )}
-                                                                <div className="flex items-center gap-x-2">
+                                                                <div className="flex flex-wrap items-center gap-2 justify-start">
                                                                     <button
                                                                         onClick={() => handleViewClick(file)}
                                                                         className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-md hover:bg-gray-100 transition disabled:opacity-30 disabled:cursor-not-allowed"

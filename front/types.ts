@@ -58,6 +58,7 @@ export interface AudioFileItem {
   subset_title: string;
   upload_uuid: string;
   task_id?: string | null;
+  uploader?: string;
 }
 
 export interface DashboardResponse {

@@ -20,7 +20,7 @@ class AudioListView(generics.ListAPIView):
 
     def get_queryset(self):
         """Return the ordered queryset with subset relationship eagerly loaded."""
-        return Audio.objects.select_related('subset').order_by('-created_at')
+        return Audio.objects.select_related('subset', 'user_uplouder').order_by('-created_at')
 
     def list(self, request, *args, **kwargs):
         """Return paginated audio items along with aggregate counts.
