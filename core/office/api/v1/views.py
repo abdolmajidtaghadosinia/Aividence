@@ -73,6 +73,17 @@ class ExportCustomContentZipView(APIView):
     def _derive_export_base_name(audio_text: AudioFileText) -> str:
         """Return the original audio filename (without extension) when available."""
 
+        def _sanitize_component(value: str) -> str:
+            cleaned = value.strip()
+            if not cleaned:
+                return ""
+
+            return cleaned.replace("/", "-").replace("\\", "-")
+
+        user_named = _sanitize_component(getattr(audio_text.file, "name", ""))
+        if user_named:
+            return user_named
+
         source_file_name = ""
         field_file = getattr(audio_text.file, "file", None)
         if field_file and getattr(field_file, "name", ""):
