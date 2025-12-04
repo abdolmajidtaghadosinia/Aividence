@@ -384,14 +384,14 @@ const DashboardPage: React.FC = () => {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full min-w-[880px] text-sm text-right text-gray-600 table-fixed relative">
+                            <table className="w-full min-w-[980px] text-sm text-right text-gray-600">
                                 <thead className="text-xs text-gray-700 uppercase bg-slate-50/80">
                                     <tr>
-                                        <th scope="col" className="px-5 py-3 w-[190px]">نام فایل صوتی</th>
-                                        <th scope="col" className="px-4 py-3 w-[140px]">تاریخ</th>
-                                        <th scope="col" className="px-4 py-3 hidden md:table-cell w-[120px]">نوع</th>
-                                        <th scope="col" className="px-4 py-3 w-[180px]">وضعیت</th>
-                                        <th scope="col" className="px-4 py-3 w-[190px] sticky right-0 bg-slate-50/90 backdrop-blur-sm border-l border-slate-200 z-10">اقدامات</th>
+                                        <th scope="col" className="px-6 py-3 min-w-[200px]">نام فایل صوتی</th>
+                                        <th scope="col" className="px-6 py-3 min-w-[170px]">تاریخ</th>
+                                        <th scope="col" className="px-6 py-3 hidden md:table-cell min-w-[120px]">نوع</th>
+                                        <th scope="col" className="px-6 py-3 min-w-[210px]">وضعیت</th>
+                                        <th scope="col" className="px-6 py-3 min-w-[220px]">اقدامات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
