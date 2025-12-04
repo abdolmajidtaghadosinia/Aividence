@@ -34,6 +34,10 @@ const DashboardPage: React.FC = () => {
     };
 
     useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
+
+    useEffect(() => {
         const state = locationState as { scrollToTop?: boolean } | null;
         if (!state?.scrollToTop) return;
 
@@ -435,7 +439,7 @@ const DashboardPage: React.FC = () => {
                                                     >
                                                         <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap max-w-[170px]">
                                                             <div className="truncate" title={file.name}>{file.name}</div>
-                                                            <div className="text-xs text-slate-500 mt-1">{file.uploader ? `توسط ${file.uploader}` : 'بارگذاری شده'}</div>
+                                                            <div className="text-xs text-slate-500 mt-1">{`توسط ${file.uploader || 'ادمین'}`}</div>
                                                         </td>
                                                         <td className="px-6 py-4 align-top">
                                                             <div className="space-y-1 text-[13px] text-slate-700">
